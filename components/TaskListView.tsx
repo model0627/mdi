@@ -23,7 +23,7 @@ function TaskRow({ task, members, index, onClick }: { task: Task; members: Membe
       onClick={onClick}
     >
       <td>
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-text-dimmed)" }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-accent-blue)", opacity: 0.75 }}>
           {task.id}
         </span>
       </td>
@@ -43,15 +43,15 @@ function TaskRow({ task, members, index, onClick }: { task: Task; members: Membe
         )}
       </td>
       <td>
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-text-muted)" }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-text-secondary)" }}>
           {fmtDate(task.created)}
         </span>
       </td>
       <td>
         <span
           style={{
-            fontFamily: "var(--font-mono)", fontSize: 11,
-            color: task.status === "cancelled" ? "var(--color-text-dimmed)" : "var(--color-text-muted)",
+            fontFamily: "var(--font-mono)", fontSize: 12,
+            color: task.status === "cancelled" ? "var(--color-text-muted)" : "var(--color-text-secondary)",
             textDecoration: task.status === "cancelled" ? "line-through" : "none",
           }}
         >
