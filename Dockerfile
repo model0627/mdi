@@ -24,16 +24,16 @@ ENV PORT=3001
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser  --system --uid 1001 nextjs
 
-# Next.js build output
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Next.js build output (regular mode — custom server uses next() directly)
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Custom server & deps
+# Custom server & runtime deps
 COPY --from=builder --chown=nextjs:nodejs /app/server.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/lib      ./lib
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=deps    --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 
 # Data directory (마운트 포인트)
 RUN mkdir -p /app/data/tasks /app/data/projects /app/data/team /app/data/.archive \
