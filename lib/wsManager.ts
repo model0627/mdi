@@ -1,6 +1,11 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { IncomingMessage } from 'http';
+import * as fs from 'fs';
+import * as path from 'path';
 import { mdStore } from './mdStore';
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const ALLOWED_PREFIXES = ['tasks/', 'projects/', 'team/'];
 
 interface AgentClient {
   memberId: string;
@@ -43,6 +48,28 @@ class WSManager {
           if (msg.type === 'ping') {
             ws.send(JSON.stringify({ type: 'pong' }));
             if (memberId) this.clients.get(memberId)!.lastSeen = Date.now();
+          }
+
+          // File sync: write file to data/ → chokidar picks up → SSE broadcast
+          if (msg.type === 'file:sync' && msg.path && msg.content !== undefined) {
+            const relPath = msg.path as string;
+            const isAllowed = ALLOWED_PREFIXES.some(p => relPath.startsWith(p));
+            if (isAllowed && relPath.endsWith('.md') && !relPath.includes('..')) {
+              const fullPath = path.join(DATA_DIR, relPath);
+              fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+              fs.writeFileSync(fullPath, msg.content as string, 'utf-8');
+              ws.send(JSON.stringify({ type: 'file:synced', path: relPath }));
+            }
+          }
+
+          if (msg.type === 'file:delete' && msg.path) {
+            const relPath = msg.path as string;
+            const isAllowed = ALLOWED_PREFIXES.some(p => relPath.startsWith(p));
+            if (isAllowed && relPath.endsWith('.md') && !relPath.includes('..')) {
+              const fullPath = path.join(DATA_DIR, relPath);
+              if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+              ws.send(JSON.stringify({ type: 'file:deleted', path: relPath }));
+            }
           }
         } catch {
           // ignore malformed messages
