@@ -162,9 +162,11 @@ class MDStore {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const filePath = path.join(dir, `${task.id}.md`);
 
-    // Preserve existing body content (checklist, description, etc.)
-    let body = '\n\n## 설명\n';
-    if (fs.existsSync(filePath) && matter) {
+    // Determine body: new description > existing body > default placeholder
+    let body = '\n\n## 설명\n\n';
+    if (task.description) {
+      body = `\n\n## 설명\n\n${task.description}\n`;
+    } else if (fs.existsSync(filePath) && matter) {
       const raw = fs.readFileSync(filePath, 'utf-8');
       const parsed = matter(raw);
       if (parsed.content.trim()) {
@@ -172,8 +174,12 @@ class MDStore {
       }
     }
 
+    // Strip description from frontmatter (it lives in body only)
+    const { description: _desc, ...frontmatterTask } = task as Task & { description?: string };
+    void _desc;
+
     const tmpPath = filePath + '.tmp';
-    const content = buildFrontmatter(task as unknown as Record<string, unknown>) + body;
+    const content = buildFrontmatter(frontmatterTask as unknown as Record<string, unknown>) + body;
     fs.writeFileSync(tmpPath, content, 'utf8');
     fs.renameSync(tmpPath, filePath);
   }

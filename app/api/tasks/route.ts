@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     created: body.created ?? new Date().toISOString().slice(0, 10),
     due: body.due ?? '',
     startDate: body.startDate ?? new Date().toISOString().slice(0, 10),
+    ...(body.description ? { description: body.description } : {}),
   };
 
   mdStore.tasks.set(task.id, task);

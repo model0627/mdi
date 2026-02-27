@@ -25,6 +25,7 @@ export interface Task {
   startDate: string;
   actualStart?: string;  // ISO datetime — status가 progress로 바뀔 때 자동 설정
   actualEnd?: string;    // ISO datetime — status가 done으로 바뀔 때 자동 설정
+  description?: string;  // 태스크 설명 (POST 시 전달, MD body에 저장)
 }
 
 export interface Project {
