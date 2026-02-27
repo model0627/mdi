@@ -1,0 +1,25 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  before_script:
+    - git config --global --add safe.directory /opt/mdi
+  script:
+    - id
+    - cd /opt/mdi/
+    - pwd
+    # 최신 코드 동기화
+    - git -c http.sslVerify=false fetch --all
+    - git -c http.sslVerify=false reset --hard origin/main
+    - git -c http.sslVerify=false pull origin main
+    # 컨테이너 재빌드 및 시작
+    - docker compose up -d --build mdi
+    # 상태 확인
+    - sleep 10
+    - docker compose ps mdi
+    - docker compose logs --tail=50 mdi
+  only:
+    - main
+  tags:
+    - mdi
