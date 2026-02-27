@@ -71,8 +71,8 @@ class WSManager {
               ws.send(JSON.stringify({ type: 'file:deleted', path: relPath }));
             }
           }
-        } catch {
-          // ignore malformed messages
+        } catch (err) {
+          ws.send(JSON.stringify({ type: 'error', message: String(err) }));
         }
       });
 
