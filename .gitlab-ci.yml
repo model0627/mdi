@@ -22,4 +22,4 @@ deploy:
   only:
     - main
   tags:
-    - mdi
+    - secumate
