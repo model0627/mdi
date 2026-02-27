@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"npx tsc --noEmit 2>&1\",\"description\":\"Run TypeScript type-check\"}",
+  "error": "Exit code 2\napp/api/tasks/[id]/route.ts(45,21): error TS2352: Conversion of type 'Task' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n  Index signature for type 'string' is missing in type 'Task'.\n\napp/api/tasks/[id]/route.ts(45,21): error TS2352: Conversion of type 'Task' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps ...",
+  "timestamp": "2026-02-27T07:53:58.993Z",
+  "retry_count": 2
+}

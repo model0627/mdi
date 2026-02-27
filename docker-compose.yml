@@ -1,0 +1,12 @@
+services:
+  mdi:
+    build: .
+    ports:
+      - "80:3001"       # http://IP 로 바로 접근
+      - "3001:3001"     # http://IP:3001 도 동작
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped

@@ -1,0 +1,273 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1772195303796,
+  "projectRoot": "/Users/shawn/Desktop/claude-code/mdi/mdi-dashboard",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.1.6",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.3",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "tsx watch server.ts",
+      "build": "next build",
+      "start": "NODE_ENV=production tsx server.ts",
+      "lint": "eslint"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase/PascalCase",
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "components",
+      "lib",
+      "public",
+      "scripts"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 4,
+      "lastAccessed": 1772195303753,
+      "keyFiles": [
+        "favicon.ico",
+        "globals.css",
+        "layout.tsx",
+        "page.tsx"
+      ]
+    },
+    "components": {
+      "path": "components",
+      "purpose": "UI components",
+      "fileCount": 9,
+      "lastAccessed": 1772195303753,
+      "keyFiles": [
+        "Avatar.tsx",
+        "DashboardView.tsx",
+        "GanttView.tsx",
+        "OfficeView.tsx",
+        "PriorityBadge.tsx"
+      ]
+    },
+    "data": {
+      "path": "data",
+      "purpose": "Data files",
+      "fileCount": 0,
+      "lastAccessed": 1772195303756,
+      "keyFiles": []
+    },
+    "hooks": {
+      "path": "hooks",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1772195303757,
+      "keyFiles": [
+        "useSSE.ts"
+      ]
+    },
+    "lib": {
+      "path": "lib",
+      "purpose": "Library code",
+      "fileCount": 3,
+      "lastAccessed": 1772195303757,
+      "keyFiles": [
+        "data.ts",
+        "mdStore.ts",
+        "wsManager.ts"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 5,
+      "lastAccessed": 1772195303758,
+      "keyFiles": [
+        "file.svg",
+        "globe.svg",
+        "next.svg",
+        "vercel.svg",
+        "window.svg"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 2,
+      "lastAccessed": 1772195303758,
+      "keyFiles": [
+        "mdi-activity.sh",
+        "mdi-connect.js"
+      ]
+    },
+    "stores": {
+      "path": "stores",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1772195303758,
+      "keyFiles": [
+        "dashboardStore.ts"
+      ]
+    },
+    "app/api": {
+      "path": "app/api",
+      "purpose": "API routes",
+      "fileCount": 0,
+      "lastAccessed": 1772195303759,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "data/team/shawn.md",
+      "accessCount": 20,
+      "lastAccessed": 1772197700851,
+      "type": "file"
+    },
+    {
+      "path": "data/tasks/T-001.md",
+      "accessCount": 4,
+      "lastAccessed": 1772197007276,
+      "type": "file"
+    },
+    {
+      "path": "components/OfficeView.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1772196143494,
+      "type": "file"
+    },
+    {
+      "path": "lib/mdStore.ts",
+      "accessCount": 3,
+      "lastAccessed": 1772196587592,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 2,
+      "lastAccessed": 1772195341270,
+      "type": "file"
+    },
+    {
+      "path": "lib/data.ts",
+      "accessCount": 2,
+      "lastAccessed": 1772196572640,
+      "type": "file"
+    },
+    {
+      "path": "app/api/tasks/[id]/route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1772196595063,
+      "type": "file"
+    },
+    {
+      "path": "components/GanttView.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1772196654514,
+      "type": "file"
+    },
+    {
+      "path": "data/tasks/T-002.md",
+      "accessCount": 2,
+      "lastAccessed": 1772196691948,
+      "type": "file"
+    },
+    {
+      "path": "scripts/setup-vps.sh",
+      "accessCount": 2,
+      "lastAccessed": 1772197005342,
+      "type": "file"
+    },
+    {
+      "path": "scripts/mdi-connect.js",
+      "accessCount": 1,
+      "lastAccessed": 1772196279786,
+      "type": "file"
+    },
+    {
+      "path": "scripts/test-ws.js",
+      "accessCount": 1,
+      "lastAccessed": 1772196689611,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.yml",
+      "accessCount": 1,
+      "lastAccessed": 1772196990916,
+      "type": "file"
+    },
+    {
+      "path": "data/team/yeon.md",
+      "accessCount": 1,
+      "lastAccessed": 1772197255546,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 1,
+      "lastAccessed": 1772197386365,
+      "type": "directory"
+    },
+    {
+      "path": "app/api/team/[id]/route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1772197418497,
+      "type": "file"
+    },
+    {
+      "path": "scripts/mdi-setup-member.sh",
+      "accessCount": 1,
+      "lastAccessed": 1772197695447,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

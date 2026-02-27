@@ -1,26 +1,222 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ─── Design Tokens ─────────────────────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Backgrounds */
+  --color-bg-base:        #08080f;
+  --color-bg-surface:     #0f0f1c;
+  --color-bg-elevated:    #151527;
+  --color-bg-card:        #1a1a2e;
+  --color-bg-card-hover:  #1f1f38;
+  --color-bg-border:      #252540;
+  --color-bg-divider:     #1e1e32;
+
+  /* Accent / Brand */
+  --color-accent-blue:    #4f8ef7;
+  --color-accent-cyan:    #22d3ee;
+  --color-accent-teal:    #14b8a6;
+
+  /* Status Colors */
+  --color-status-backlog:    #52525b;
+  --color-status-backlog-bg: rgba(82,82,91,0.15);
+  --color-status-progress:   #f59e0b;
+  --color-status-progress-bg:rgba(245,158,11,0.15);
+  --color-status-review:     #a78bfa;
+  --color-status-review-bg:  rgba(167,139,250,0.15);
+  --color-status-done:       #34d399;
+  --color-status-done-bg:    rgba(52,211,153,0.15);
+  --color-status-cancelled:  #71717a;
+  --color-status-cancelled-bg:rgba(113,113,122,0.12);
+
+  /* Priority Colors */
+  --color-priority-low:      #6b7280;
+  --color-priority-medium:   #f97316;
+  --color-priority-high:     #fb923c;
+  --color-priority-critical: #f43f5e;
+
+  /* Avatar Palette */
+  --color-avatar-0: #6366f1;
+  --color-avatar-1: #ec4899;
+  --color-avatar-2: #f59e0b;
+  --color-avatar-3: #10b981;
+  --color-avatar-4: #3b82f6;
+  --color-avatar-5: #8b5cf6;
+  --color-avatar-6: #ef4444;
+  --color-avatar-7: #06b6d4;
+
+  /* Project Border Colors */
+  --color-project-alpha: #4f8ef7;
+  --color-project-beta:  #34d399;
+  --color-project-gamma: #f97316;
+
+  /* Text */
+  --color-text-primary:   #e8e8f0;
+  --color-text-secondary: #9494b0;
+  --color-text-muted:     #5a5a78;
+  --color-text-dimmed:    #3a3a55;
+
+  /* Live / Online */
+  --color-live:  #22c55e;
+  --color-live-pulse: rgba(34,197,94,0.35);
+
+  /* Fonts */
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
+  --font-display: "Syne", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base Reset ─────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  color-scheme: dark;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+body { margin: 0; min-height: 100dvh; }
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-bg-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-dimmed); }
+
+/* ─── Pixel Art Styles ──────────────────────────────────────────────────────── */
+
+.pixel-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
+
+/* ─── Status Badge Utilities ────────────────────────────────────────────────── */
+
+.badge-backlog   { background: var(--color-status-backlog-bg);   color: var(--color-status-backlog);   }
+.badge-progress  { background: var(--color-status-progress-bg);  color: var(--color-status-progress);  }
+.badge-review    { background: var(--color-status-review-bg);    color: var(--color-status-review);    }
+.badge-done      { background: var(--color-status-done-bg);      color: var(--color-status-done);      }
+.badge-cancelled { background: var(--color-status-cancelled-bg); color: var(--color-status-cancelled); }
+
+/* ─── Animations ────────────────────────────────────────────────────────────── */
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--color-live-pulse); }
+  50%       { opacity: 0.85; box-shadow: 0 0 0 5px transparent; }
+}
+
+@keyframes float-desk {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-3px); }
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes slide-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+
+@keyframes bar-grow {
+  from { width: 0%; }
+  to   { width: var(--bar-width); }
+}
+
+@keyframes desk-idle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25%       { transform: translateY(-1px) rotate(-1deg); }
+  75%       { transform: translateY(1px) rotate(1deg); }
+}
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0; }
+  30%            { opacity: 1; }
+}
+
+.animate-pulse-live  { animation: pulse-live  2s ease-in-out infinite; }
+.animate-float-desk  { animation: float-desk  3s ease-in-out infinite; }
+.animate-slide-in-up { animation: slide-in-up 0.4s ease both; }
+.animate-bar-grow    { animation: bar-grow    1s cubic-bezier(0.4,0,0.2,1) both; }
+.animate-desk-idle   { animation: desk-idle   4s ease-in-out infinite; }
+
+/* ─── Card Hover Effects ────────────────────────────────────────────────────── */
+
+.card-interactive {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--color-bg-border);
+}
+
+/* ─── Gantt Bar ─────────────────────────────────────────────────────────────── */
+
+.gantt-bar {
+  height: 20px;
+  border-radius: 3px;
+  position: absolute;
+  transition: filter 0.15s ease;
+}
+.gantt-bar:hover { filter: brightness(1.2); }
+
+/* ─── Progress Bar ──────────────────────────────────────────────────────────── */
+
+.progress-track {
+  height: 4px;
+  background: var(--color-bg-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ─── Pixel Character Sprites ───────────────────────────────────────────────── */
+
+.pixel-char {
+  width: 32px;
+  height: 48px;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+/* ─── Table ─────────────────────────────────────────────────────────────────── */
+
+.task-table th {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-bg-border);
+  white-space: nowrap;
+}
+.task-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-bg-divider);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.task-table tr:hover td {
+  background: var(--color-bg-elevated);
+}
+.task-table tr:last-child td { border-bottom: none; }
