@@ -14,7 +14,7 @@ const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
 
-const SERVER_URL = process.argv[2] || 'ws://localhost:3001/ws';
+const SERVER_URL = process.argv[2] || 'ws://192.168.130.36:80/ws';
 const DATA_DIR = path.resolve(__dirname, '../data');
 const RECONNECT_DELAY = 3000;
 
