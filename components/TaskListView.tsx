@@ -213,6 +213,26 @@ export default function TaskListView() {
         <ProjectSection key={p.id} project={p} tasks={tasks} members={members} filter={filter} onTaskClick={setSelectedTaskId} />
       ))}
 
+      {/* 미분류 섹션 */}
+      {(() => {
+        const projectIds = new Set(projects.map((p) => p.id));
+        const unassigned = tasks.filter((t) => !t.projectId || !projectIds.has(t.projectId));
+        const filtered = filter === "all" ? unassigned : unassigned.filter((t) => t.status === filter);
+        if (filtered.length === 0) return null;
+        const fakeProject = { id: "", name: "미분류", color: "#71717a", description: "", startDate: "", endDate: "", memberIds: [], taskIds: [] };
+        return (
+          <ProjectSection
+            key="__unassigned__"
+            project={fakeProject as unknown as import("@/lib/data").Project}
+            tasks={tasks}
+            members={members}
+            filter={filter}
+            defaultOpen={false}
+            onTaskClick={setSelectedTaskId}
+          />
+        );
+      })()}
+
       {selectedTaskId && (
         <TaskModal taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} />
       )}
