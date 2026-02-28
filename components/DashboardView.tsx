@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import {
   statusLabel,
@@ -7,6 +8,7 @@ import {
 import type { Project, Member, Task } from "@/lib/data";
 import Avatar from "./Avatar";
 import StatusBadge from "./StatusBadge";
+import TaskModal from "./TaskModal";
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
@@ -128,10 +130,11 @@ function ProjectCard({ project, tasks, members, index }: {
 
 // ─── Team Member Card ─────────────────────────────────────────────────────────
 
-function MemberCard({ member, tasks, index }: {
+function MemberCard({ member, tasks, index, onTaskClick }: {
   member: Member;
   tasks: Task[];
   index: number;
+  onTaskClick: (taskId: string) => void;
 }) {
   const mtasks = tasks.filter((t) => t.assigneeId === member.id);
   const today     = "2025-01-27";
@@ -226,7 +229,14 @@ function MemberCard({ member, tasks, index }: {
                 {label}
               </p>
               {items.map((t) => (
-                <div key={t.id} className="flex items-center gap-1.5 mb-0.5">
+                <div
+                  key={t.id}
+                  className="flex items-center gap-1.5 mb-0.5 rounded px-1 -mx-1"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => onTaskClick(t.id)}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
                   <span className="rounded-full shrink-0" style={{ width: 5, height: 5, background: dot }} />
                   <span className="text-xs truncate" style={{ color: "var(--color-text-secondary)", fontFamily: "var(--font-sans)" }}>
                     {t.title}
@@ -249,6 +259,7 @@ function MemberCard({ member, tasks, index }: {
 
 export default function DashboardView() {
   const { projects, members, tasks } = useDashboardStore();
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   return (
     <div className="flex-1 overflow-auto p-5" style={{ background: "var(--color-bg-base)" }}>
@@ -287,10 +298,14 @@ export default function DashboardView() {
         </div>
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}>
           {members.map((m, i) => (
-            <MemberCard key={m.id} member={m} tasks={tasks} index={i} />
+            <MemberCard key={m.id} member={m} tasks={tasks} index={i} onTaskClick={setSelectedTaskId} />
           ))}
         </div>
       </section>
+
+      {selectedTaskId && (
+        <TaskModal taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} />
+      )}
     </div>
   );
 }
