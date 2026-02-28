@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
-# Fix ownership of mounted data volume at runtime
-chown -R nextjs:nodejs /app/data
-# Drop privileges and exec the main process
+# Ensure data/ is world-writable so host CI runner (gitlab-runner) can overwrite files
+chmod -R 777 /app/data 2>/dev/null || true
+# Drop privileges and exec the main process (umask 000 = new files always world-writable)
+umask 000
 exec su-exec nextjs "$@"
