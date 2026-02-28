@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { statusLabel, priorityLabel } from "@/lib/data";
 import type { Task } from "@/lib/data";
 import StatusBadge from "./StatusBadge";
@@ -50,19 +50,66 @@ function MarkdownBody({ content }: { content: string }) {
 
 export default function TaskModal({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const [task, setTask] = useState<TaskWithBody | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [bodyDraft, setBodyDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   useEffect(() => {
     fetch(`/api/tasks/${taskId}`)
       .then((r) => r.json())
-      .then(setTask);
+      .then((t: TaskWithBody) => {
+        setTask(t);
+        setBodyDraft(t.body ?? "");
+      });
   }, [taskId]);
 
   // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (editing) setEditing(false);
+        else onClose();
+      }
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [onClose, editing]);
+
+  const handleSaveBody = useCallback(async () => {
+    if (!task) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: bodyDraft }),
+      });
+      const updated = await res.json();
+      setTask({ ...updated, body: bodyDraft });
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }, [task, bodyDraft]);
+
+  const handleComplete = useCallback(async () => {
+    if (!task) return;
+    setCompleting(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done" }),
+      });
+      const updated = await res.json();
+      setTask((prev) => ({ ...prev, ...updated }));
+    } finally {
+      setCompleting(false);
+    }
+  }, [task]);
+
+  const isDone = task?.status === "done";
 
   return (
     <div
@@ -100,8 +147,8 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
               {[
                 { label: "담당자", value: task.assigneeId },
                 { label: "프로젝트", value: task.projectId },
-                { label: "생성일", value: task.created?.slice(0, 10) ?? "—" },
-                { label: "마감일", value: task.due?.slice(0, 10) ?? "—" },
+                { label: "생성일", value: task.created ? new Date(task.created).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—" },
+                { label: "마감일", value: task.due ? new Date(task.due).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—" },
               ].map(({ label, value }) => (
                 <div key={label}>
                   <span style={{ fontSize: 10, color: "var(--color-text-dimmed)", fontFamily: "var(--font-display)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
@@ -112,10 +159,91 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
 
             {/* Body */}
             <div className="px-5 py-4 overflow-auto flex-1">
-              {task.body ? (
+              {editing ? (
+                <textarea
+                  autoFocus
+                  value={bodyDraft}
+                  onChange={(e) => setBodyDraft(e.target.value)}
+                  placeholder="작업 내용을 작성하세요..."
+                  style={{
+                    width: "100%",
+                    minHeight: 160,
+                    background: "var(--color-bg-hover, rgba(255,255,255,0.04))",
+                    border: "1px solid var(--color-bg-border)",
+                    borderRadius: 6,
+                    padding: "10px 12px",
+                    fontSize: 13,
+                    color: "var(--color-text-secondary)",
+                    lineHeight: 1.6,
+                    resize: "vertical",
+                    outline: "none",
+                    fontFamily: "inherit",
+                  }}
+                />
+              ) : task.body ? (
                 <MarkdownBody content={task.body} />
               ) : (
                 <p style={{ fontSize: 13, color: "var(--color-text-dimmed)" }}>내용 없음</p>
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div
+              className="px-5 py-3 flex items-center justify-between gap-2"
+              style={{ borderTop: "1px solid var(--color-bg-border)" }}
+            >
+              {editing ? (
+                <>
+                  <button
+                    onClick={() => { setEditing(false); setBodyDraft(task.body ?? ""); }}
+                    style={{ fontSize: 12, color: "var(--color-text-dimmed)", padding: "5px 12px", borderRadius: 6, border: "1px solid var(--color-bg-border)" }}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleSaveBody}
+                    disabled={saving}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#fff",
+                      background: "var(--color-accent, #5b6cf8)",
+                      padding: "5px 16px",
+                      borderRadius: 6,
+                      border: "none",
+                      opacity: saving ? 0.6 : 1,
+                      cursor: saving ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {saving ? "저장 중..." : "저장"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setEditing(true)}
+                    style={{ fontSize: 12, color: "var(--color-text-secondary)", padding: "5px 12px", borderRadius: 6, border: "1px solid var(--color-bg-border)" }}
+                  >
+                    내용 편집
+                  </button>
+                  <button
+                    onClick={handleComplete}
+                    disabled={isDone || completing}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: isDone ? "var(--color-text-dimmed)" : "#fff",
+                      background: isDone ? "transparent" : "var(--color-live, #22c55e)",
+                      padding: "5px 16px",
+                      borderRadius: 6,
+                      border: isDone ? "1px solid var(--color-bg-border)" : "none",
+                      opacity: completing ? 0.6 : 1,
+                      cursor: isDone || completing ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {isDone ? "완료됨" : completing ? "처리 중..." : "태스크 완료"}
+                  </button>
+                </>
               )}
             </div>
           </>

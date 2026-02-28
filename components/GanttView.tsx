@@ -51,8 +51,8 @@ function getMonthRange(tasks: Task[], projects: Project[]): ChartRange {
 
 function getWeekRange(): ChartRange {
   const today = getToday();
-  const start = addDays(today, -14);  // 2주 전
-  const end   = addDays(today, 70);   // 10주 후
+  const start = addDays(today, -3);   // 3일 전
+  const end   = addDays(today, 18);   // 18일 후
   return { start, end, total: Math.max(1, daysBetween(start, end)) };
 }
 
