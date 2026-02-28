@@ -5,7 +5,6 @@ deploy:
   stage: deploy
   before_script:
     - git config --global --add safe.directory /opt/mdi
-    - git config --global --add safe.directory /opt/secumate
   script:
     - id
     - cd /opt/mdi/
