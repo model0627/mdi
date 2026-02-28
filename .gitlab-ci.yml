@@ -11,6 +11,7 @@ deploy:
     - pwd
     # 최신 코드 동기화
     - git -c http.sslVerify=false fetch --all
+    - git clean -f data/projects/
     - git -c http.sslVerify=false reset --hard origin/main
     - git -c http.sslVerify=false pull origin main
     # 컨테이너 재빌드 및 시작
