@@ -9,7 +9,14 @@ import Avatar from "./Avatar";
 import TaskModal from "./TaskModal";
 
 function fmtDate(d: string) {
-  return d ? d.slice(0, 10).slice(5) : "—";
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return d.slice(5, 10);
+  const mm  = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd  = String(dt.getDate()).padStart(2, "0");
+  const hh  = String(dt.getHours()).padStart(2, "0");
+  const min = String(dt.getMinutes()).padStart(2, "0");
+  return `${mm}-${dd} ${hh}:${min}`;
 }
 
 const STATUS_ORDER: Status[] = ["progress", "review", "backlog", "done", "cancelled"];
@@ -137,8 +144,8 @@ function ProjectSection({
             <col style={{ width: 110 }} />
             <col style={{ width: 80 }} />
             <col style={{ width: 140 }} />
-            <col style={{ width: 100 }} />
-            <col style={{ width: 100 }} />
+            <col style={{ width: 120 }} />
+            <col style={{ width: 120 }} />
           </colgroup>
           <thead>
             <tr>

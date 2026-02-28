@@ -27,7 +27,7 @@ print('T-'+str((max(nums) if nums else 0)+1).zfill(3))
 ")
 curl -s -X POST http://192.168.130.36:3001/api/tasks \
   -H 'Content-Type: application/json' \
-  -d "{\"id\":\"$NEXT_ID\",\"title\":\"[작업제목]\",\"description\":\"[작업 상세 설명]\",\"status\":\"progress\",\"priority\":\"medium\",\"assigneeId\":\"shawn\",\"projectId\":\"mdi\",\"due\":\"$(date +%Y-%m-%d)\",\"startDate\":\"$(date +%Y-%m-%d)\"}" > /dev/null 2>&1
+  -d "{\"id\":\"$NEXT_ID\",\"title\":\"[작업제목]\",\"description\":\"[작업 상세 설명]\",\"status\":\"progress\",\"priority\":\"medium\",\"assigneeId\":\"shawn\",\"projectId\":\"mdi\",\"due\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"startDate\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > /dev/null 2>&1
 ```
 
 ### 3. 작업 진행

@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
     priority: body.priority ?? 'medium',
     assigneeId: body.assigneeId ?? '',
     projectId: body.projectId ?? '',
-    created: body.created ?? new Date().toISOString().slice(0, 10),
+    created: body.created ?? new Date().toISOString(),
     due: body.due ?? '',
-    startDate: body.startDate ?? new Date().toISOString().slice(0, 10),
+    startDate: body.startDate ?? new Date().toISOString(),
     ...(body.description ? { description: body.description } : {}),
   };
 
