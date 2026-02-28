@@ -196,6 +196,13 @@ class MDStore {
     const tmp = filePath + '.tmp';
     fs.writeFileSync(tmp, output, 'utf-8');
     fs.renameSync(tmp, filePath);
+
+    // 즉시 in-memory 업데이트 + SSE broadcast (chokidar 의존 제거)
+    const updated = data as Member;
+    if (updated.id) {
+      this.members.set(updated.id, updated);
+      this.broadcast('member:update', updated);
+    }
   }
 
   archiveTaskFile(id: string) {
