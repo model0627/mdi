@@ -12,11 +12,10 @@ curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
   -d '{"currentActivity":"[작업 내용 요약]"}' > /dev/null 2>&1 &
 ```
 
-### 2. 작업 항목 생성 (MDI API)
-- 사용자 요청을 받으면 **즉시 MDI 태스크 생성** 후 진행
-- `title`: 작업 제목 (간결하게)
-- `description`: 작업 내용 상세 설명 (무엇을 왜 하는지)
-- 각 작업은 `progress` → `done` 순서로 상태 관리
+### 2. 작업 항목 생성 (MDI API) — 반드시 작업 수행 전에 생성
+- **코드 수정, 파일 생성/편집, 분석, 구현, 커밋/푸시 등 모든 실질적 작업 시작 전에 먼저 태스크를 생성한다**
+- 단순 답변/안내만 예외 — 그 외에는 예외 없이 생성
+- `status: "progress"` 로 생성하고 **작업이 완전히 끝날 때까지 유지** → 완료 후 `done`
 
 ```bash
 NEXT_ID=$(curl -s http://192.168.130.36:3001/api/tasks | python3 -c "
@@ -27,7 +26,8 @@ print('T-'+str((max(nums) if nums else 0)+1).zfill(3))
 ")
 curl -s -X POST http://192.168.130.36:3001/api/tasks \
   -H 'Content-Type: application/json' \
-  -d "{\"id\":\"$NEXT_ID\",\"title\":\"[작업제목]\",\"description\":\"[작업 상세 설명]\",\"status\":\"progress\",\"priority\":\"medium\",\"assigneeId\":\"shawn\",\"projectId\":\"mdi\",\"due\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"startDate\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > /dev/null 2>&1
+  -d "{\"id\":\"$NEXT_ID\",\"title\":\"[작업제목]\",\"description\":\"[작업 상세 설명]\",\"status\":\"progress\",\"priority\":\"medium\",\"assigneeId\":\"shawn\",\"due\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"startDate\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+echo "태스크 생성: $NEXT_ID"
 ```
 
 ### 3. 작업 진행
