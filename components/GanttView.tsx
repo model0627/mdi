@@ -1,22 +1,18 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import { statusLabel, Status } from "@/lib/data";
 import type { Task, Member, Project } from "@/lib/data";
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
-function toDateStr(s: string): string {
-  return s.slice(0, 10);
-}
+function toDateStr(s: string): string { return s ? s.slice(0, 10) : ""; }
 
 function daysBetween(a: string, b: string): number {
   return (new Date(b).getTime() - new Date(a).getTime()) / 86400000;
 }
 
-function getToday(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+function getToday(): string { return new Date().toISOString().slice(0, 10); }
 
 function addMonths(dateStr: string, n: number): string {
   const d = new Date(dateStr);
@@ -30,47 +26,80 @@ function addDays(dateStr: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-// ─── Chart range — computed from actual data ───────────────────────────────────
+// ─── Chart ranges ─────────────────────────────────────────────────────────────
 
 interface ChartRange { start: string; end: string; total: number }
 
-function getChartRange(tasks: Task[], projects: Project[]): ChartRange {
+function getMonthRange(tasks: Task[], projects: Project[]): ChartRange {
   const today = getToday();
   const dates: string[] = [today];
-
   for (const t of tasks) {
-    if (t.startDate)    dates.push(toDateStr(t.startDate));
-    if (t.due)          dates.push(toDateStr(t.due));
-    if (t.actualStart)  dates.push(toDateStr(t.actualStart));
-    if (t.actualEnd)    dates.push(toDateStr(t.actualEnd));
+    if (t.startDate)   dates.push(toDateStr(t.startDate));
+    if (t.due)         dates.push(toDateStr(t.due));
+    if (t.actualStart) dates.push(toDateStr(t.actualStart));
+    if (t.actualEnd)   dates.push(toDateStr(t.actualEnd));
   }
   for (const p of projects) {
     if (p.startDate) dates.push(toDateStr(p.startDate));
     if (p.endDate)   dates.push(toDateStr(p.endDate));
   }
+  const sorted = [...new Set(dates.filter(Boolean))].sort();
+  const start = addDays(sorted[0], -14);
+  const end   = addMonths(sorted[sorted.length - 1], 1);
+  return { start, end, total: Math.max(1, daysBetween(start, end)) };
+}
 
-  const sorted = [...new Set(dates)].sort();
-  const start = addDays(sorted[0], -14);          // 2주 여백
-  const end   = addMonths(sorted[sorted.length - 1], 1); // 1달 여백
+function getWeekRange(): ChartRange {
+  const today = getToday();
+  const start = addDays(today, -14);  // 2주 전
+  const end   = addDays(today, 70);   // 10주 후
   return { start, end, total: Math.max(1, daysBetween(start, end)) };
 }
 
 function pct(dateStr: string, range: ChartRange): number {
+  if (!dateStr) return 0;
   const d = Math.max(0, Math.min(range.total, daysBetween(range.start, toDateStr(dateStr))));
   return d / range.total;
 }
 
-// ─── Month labels ─────────────────────────────────────────────────────────────
+// ─── Labels ───────────────────────────────────────────────────────────────────
 
-function monthLabels(range: ChartRange): { label: string; pos: number }[] {
-  const result: { label: string; pos: number }[] = [];
+interface Label { label: string; pos: number; isMonthStart: boolean }
+
+function monthLabels(range: ChartRange): Label[] {
+  const result: Label[] = [];
   const end = new Date(range.end);
   const cur = new Date(range.start);
   cur.setDate(1);
   while (cur <= end) {
     const ds = cur.toISOString().slice(0, 10);
-    result.push({ label: `${cur.getFullYear() % 100}년 ${cur.getMonth() + 1}월`, pos: pct(ds, range) });
+    result.push({
+      label: `${cur.getFullYear() % 100}년 ${cur.getMonth() + 1}월`,
+      pos: pct(ds, range),
+      isMonthStart: true,
+    });
     cur.setMonth(cur.getMonth() + 1);
+  }
+  return result;
+}
+
+function weekLabels(range: ChartRange): Label[] {
+  const result: Label[] = [];
+  const end = new Date(range.end);
+  // 가장 가까운 월요일로 시작
+  const cur = new Date(range.start);
+  const dow = cur.getDay();
+  const offset = dow === 1 ? 0 : dow === 0 ? 1 : (8 - dow);
+  cur.setDate(cur.getDate() + offset);
+
+  while (cur <= end) {
+    const ds = cur.toISOString().slice(0, 10);
+    const isMonthStart = cur.getDate() <= 7;
+    const label = isMonthStart
+      ? `${cur.getMonth() + 1}월 ${cur.getDate()}일`
+      : `${cur.getMonth() + 1}/${cur.getDate()}`;
+    result.push({ label, pos: pct(ds, range), isMonthStart });
+    cur.setDate(cur.getDate() + 7);
   }
   return result;
 }
@@ -87,6 +116,8 @@ const barColor: Record<Status, { bg: string; border: string }> = {
 
 // ─── Gantt Row ────────────────────────────────────────────────────────────────
 
+const MIN_BAR_PX = 8; // 최소 bar 너비 (px)
+
 function GanttRow({ task, members, range, rowIndex }: {
   task: Task; members: Member[]; range: ChartRange; rowIndex: number;
 }) {
@@ -94,21 +125,21 @@ function GanttRow({ task, members, range, rowIndex }: {
   const today = getToday();
   const { bg, border } = barColor[task.status];
 
-  // Planned bar (always shown, dashed)
-  const plannedL = pct(task.startDate, range);
-  const plannedR = pct(task.due, range);
-  const plannedW = Math.max(plannedR - plannedL, 0.005);
+  const startDate = task.startDate || task.created || today;
+  const dueDate   = task.due || startDate;
 
-  // Actual bar (shown when actualStart set)
+  const plannedL = pct(startDate, range);
+  const plannedR = pct(dueDate, range);
+  const plannedW = plannedR - plannedL;
+
   const hasActual = !!task.actualStart;
   const actualL   = hasActual ? pct(task.actualStart!, range) : null;
   const actualEnd = task.actualEnd
     ? toDateStr(task.actualEnd)
     : task.status === "progress" && task.actualStart ? today : null;
   const actualR = actualEnd ? pct(actualEnd, range) : null;
-  const actualW = actualL !== null && actualR !== null ? Math.max(actualR - actualL, 0.005) : null;
+  const actualW = actualL !== null && actualR !== null ? actualR - actualL : null;
 
-  // Duration label
   const duration = task.actualStart
     ? task.actualEnd
       ? `${Math.round(daysBetween(task.actualStart, task.actualEnd))}일`
@@ -141,33 +172,35 @@ function GanttRow({ task, members, range, rowIndex }: {
         )}
       </div>
 
-      {/* Bar area — 2 tracks */}
+      {/* Bar area */}
       <div className="relative flex-1 h-full px-2 flex flex-col justify-center gap-1.5">
-        {/* Track 1: Planned (dashed, translucent) */}
+        {/* Track 1: Planned */}
         <div className="relative w-full" style={{ height: 7 }}>
           <div
             style={{
               position: "absolute",
               left: `${plannedL * 100}%`,
-              width: `${plannedW * 100}%`,
+              width: plannedW > 0 ? `${plannedW * 100}%` : 0,
+              minWidth: `${MIN_BAR_PX}px`,
               height: "100%",
               background: bg,
               border: `1px dashed ${border}`,
               borderRadius: 2,
               opacity: 0.45,
             }}
-            title={`계획: ${task.startDate} → ${task.due}`}
+            title={`계획: ${startDate} → ${dueDate}`}
           />
         </div>
 
-        {/* Track 2: Actual (solid, vivid) */}
+        {/* Track 2: Actual */}
         <div className="relative w-full" style={{ height: 10 }}>
           {actualL !== null && actualW !== null && (
             <div
               style={{
                 position: "absolute",
                 left: `${actualL * 100}%`,
-                width: `${actualW * 100}%`,
+                width: actualW > 0 ? `${actualW * 100}%` : 0,
+                minWidth: `${MIN_BAR_PX}px`,
                 height: "100%",
                 background: bg,
                 border: `1.5px solid ${border}`,
@@ -185,11 +218,20 @@ function GanttRow({ task, members, range, rowIndex }: {
 
 // ─── Gantt View ───────────────────────────────────────────────────────────────
 
+type Zoom = "week" | "month";
+
 export default function GanttView() {
   const { projects, tasks, members } = useDashboardStore();
+  const [zoom, setZoom] = useState<Zoom>("week");
 
-  const range    = useMemo(() => getChartRange(tasks, projects), [tasks, projects]);
-  const months   = useMemo(() => monthLabels(range), [range]);
+  const range = useMemo(
+    () => zoom === "week" ? getWeekRange() : getMonthRange(tasks, projects),
+    [zoom, tasks, projects],
+  );
+  const labels = useMemo(
+    () => zoom === "week" ? weekLabels(range) : monthLabels(range),
+    [zoom, range],
+  );
   const today    = getToday();
   const todayPos = pct(today, range);
 
@@ -198,18 +240,53 @@ export default function GanttView() {
       {/* Sticky header */}
       <div className="sticky top-0 z-20" style={{ background: "var(--color-bg-surface)", borderBottom: "1px solid var(--color-bg-border)" }}>
         <div className="flex items-center" style={{ height: 40 }}>
-          <div className="shrink-0 flex items-center px-3" style={{ width: 260, height: "100%", borderRight: "1px solid var(--color-bg-border)" }}>
+          {/* Left column: title + zoom toggle */}
+          <div className="shrink-0 flex items-center gap-2 px-3" style={{ width: 260, height: "100%", borderRight: "1px solid var(--color-bg-border)" }}>
             <span className="text-xs font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", fontSize: 10 }}>
               작업 / 담당자
             </span>
+            {/* Zoom toggle */}
+            <div className="flex items-center gap-0.5 ml-auto" style={{ background: "var(--color-bg-base)", borderRadius: 4, padding: "2px", border: "1px solid var(--color-bg-border)" }}>
+              {(["week", "month"] as Zoom[]).map((z) => (
+                <button
+                  key={z}
+                  onClick={() => setZoom(z)}
+                  style={{
+                    padding: "1px 8px",
+                    fontSize: 9,
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 600,
+                    borderRadius: 3,
+                    border: "none",
+                    cursor: "pointer",
+                    background: zoom === z ? "var(--color-accent-blue)" : "transparent",
+                    color: zoom === z ? "#fff" : "var(--color-text-muted)",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {z === "week" ? "주별" : "월별"}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Timeline labels */}
           <div className="relative flex-1 h-full overflow-hidden">
-            {months.map(({ label, pos }) => (
-              <div key={label} className="absolute top-0 flex items-center" style={{ left: `${pos * 100}%`, height: "100%", paddingLeft: 8 }}>
-                <span style={{ fontSize: 10, fontFamily: "var(--font-display)", color: "var(--color-text-dimmed)", fontWeight: 600, whiteSpace: "nowrap" }}>
+            {labels.map(({ label, pos, isMonthStart }) => (
+              <div key={label} className="absolute top-0 flex items-center" style={{ left: `${pos * 100}%`, height: "100%", paddingLeft: 6 }}>
+                <span style={{
+                  fontSize: zoom === "week" ? (isMonthStart ? 10 : 9) : 10,
+                  fontFamily: "var(--font-display)",
+                  color: isMonthStart ? "var(--color-text-secondary)" : "var(--color-text-dimmed)",
+                  fontWeight: isMonthStart ? 700 : 500,
+                  whiteSpace: "nowrap",
+                }}>
                   {label}
                 </span>
-                <div className="absolute left-0 top-0 bottom-0" style={{ width: 1, background: "var(--color-bg-border)" }} />
+                <div className="absolute left-0 top-0 bottom-0" style={{
+                  width: 1,
+                  background: isMonthStart ? "var(--color-bg-border)" : "var(--color-bg-divider)",
+                }} />
               </div>
             ))}
             {/* Today line */}
