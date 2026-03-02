@@ -132,9 +132,29 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
 
   const handleCopyMarkdown = useCallback(async () => {
     const md = buildMarkdown();
-    await navigator.clipboard.writeText(md);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    let success = false;
+    // Modern Clipboard API (requires HTTPS or localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(md);
+        success = true;
+      } catch { /* fall through */ }
+    }
+    // Legacy fallback — works on plain HTTP
+    if (!success) {
+      const ta = document.createElement("textarea");
+      ta.value = md;
+      ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand("copy"); success = true; } catch { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   }, [buildMarkdown]);
 
   const handleDownloadMarkdown = useCallback(() => {
@@ -269,14 +289,30 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                     <button
                       onClick={handleCopyMarkdown}
                       title="마크다운 복사"
-                      style={{ fontSize: 11, color: copied ? "var(--color-live)" : "var(--color-text-dimmed)", padding: "5px 10px", borderRadius: 6, border: "1px solid var(--color-bg-border)", display: "flex", alignItems: "center", gap: 4 }}
+                      style={{
+                        fontSize: 11,
+                        color: copied ? "var(--color-live)" : "var(--color-text-secondary)",
+                        padding: "5px 10px", borderRadius: 6,
+                        border: copied ? "1px solid var(--color-live)" : "1px solid var(--color-bg-border)",
+                        background: copied ? "rgba(34,197,94,0.08)" : "var(--color-bg-elevated)",
+                        display: "flex", alignItems: "center", gap: 4,
+                        cursor: "pointer",
+                      }}
                     >
                       {copied ? "✓ 복사됨" : "⎘ 복사"}
                     </button>
                     <button
                       onClick={handleDownloadMarkdown}
                       title=".md 다운로드"
-                      style={{ fontSize: 11, color: "var(--color-text-dimmed)", padding: "5px 10px", borderRadius: 6, border: "1px solid var(--color-bg-border)", display: "flex", alignItems: "center", gap: 4 }}
+                      style={{
+                        fontSize: 11,
+                        color: "var(--color-text-secondary)",
+                        padding: "5px 10px", borderRadius: 6,
+                        border: "1px solid var(--color-bg-border)",
+                        background: "var(--color-bg-elevated)",
+                        display: "flex", alignItems: "center", gap: 4,
+                        cursor: "pointer",
+                      }}
                     >
                       ↓ 다운로드
                     </button>
