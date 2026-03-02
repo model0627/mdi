@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { mdStore } from '@/lib/mdStore';
+import type { Project } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,4 +27,30 @@ export async function GET() {
   });
 
   return NextResponse.json(result);
+}
+
+export async function POST(req: NextRequest) {
+  await mdStore.init();
+  const body = await req.json() as Partial<Project>;
+
+  if (!body.id || !body.name) {
+    return NextResponse.json({ error: 'id and name are required' }, { status: 400 });
+  }
+
+  const project: Project = {
+    id: body.id,
+    name: body.name,
+    description: body.description ?? '',
+    color: body.color ?? '#4f8ef7',
+    memberIds: body.memberIds ?? [],
+    taskIds: [],
+    startDate: body.startDate ?? new Date().toISOString().slice(0, 10),
+    endDate: body.endDate ?? '',
+  };
+
+  mdStore.projects.set(project.id, project);
+  mdStore.writeProjectFile(project);
+  mdStore.broadcast('project:create', project);
+
+  return NextResponse.json(project, { status: 201 });
 }

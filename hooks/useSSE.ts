@@ -43,6 +43,10 @@ export function useSSE() {
         removeTask(id);
       });
 
+      es.addEventListener('project:create', (e: MessageEvent) => {
+        updateProject(JSON.parse(e.data) as Project);
+      });
+
       es.addEventListener('project:update', (e: MessageEvent) => {
         updateProject(JSON.parse(e.data) as Project);
       });

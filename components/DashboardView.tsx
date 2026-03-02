@@ -9,6 +9,7 @@ import type { Project, Member, Task } from "@/lib/data";
 import Avatar from "./Avatar";
 import StatusBadge from "./StatusBadge";
 import TaskModal from "./TaskModal";
+import CreateProjectModal from "./CreateProjectModal";
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
@@ -260,6 +261,7 @@ function MemberCard({ member, tasks, index, onTaskClick }: {
 export default function DashboardView() {
   const { projects, members, tasks } = useDashboardStore();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [showCreateProject, setShowCreateProject] = useState(false);
 
   return (
     <div className="flex-1 overflow-auto p-5" style={{ background: "var(--color-bg-base)" }}>
@@ -272,9 +274,18 @@ export default function DashboardView() {
           >
             프로젝트
           </h2>
-          <span className="text-xs" style={{ color: "var(--color-text-dimmed)" }}>
-            {projects.length}개 활성
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: "var(--color-text-dimmed)" }}>
+              {projects.length}개 활성
+            </span>
+            <button
+              onClick={() => setShowCreateProject(true)}
+              className="flex items-center gap-1 text-xs rounded px-2 py-0.5 transition-colors"
+              style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)", border: "1px solid var(--color-bg-border)" }}
+            >
+              <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> 새 프로젝트
+            </button>
+          </div>
         </div>
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
           {projects.map((p, i) => (
@@ -305,6 +316,9 @@ export default function DashboardView() {
 
       {selectedTaskId && (
         <TaskModal taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} />
+      )}
+      {showCreateProject && (
+        <CreateProjectModal onClose={() => setShowCreateProject(false)} />
       )}
     </div>
   );

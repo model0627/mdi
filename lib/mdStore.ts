@@ -220,6 +220,16 @@ class MDStore {
     }
   }
 
+  writeProjectFile(project: Project) {
+    const dir = path.join(DATA_DIR, 'projects');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const filePath = path.join(dir, `${project.id}.md`);
+    const tmpPath = filePath + '.tmp';
+    const content = buildFrontmatter(project as unknown as Record<string, unknown>) + '\n';
+    fs.writeFileSync(tmpPath, content, 'utf8');
+    fs.renameSync(tmpPath, filePath);
+  }
+
   archiveTaskFile(id: string) {
     const src = path.join(DATA_DIR, 'tasks', `${id}.md`);
     const archiveDir = path.join(DATA_DIR, '.archive');
