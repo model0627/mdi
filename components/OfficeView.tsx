@@ -16,7 +16,7 @@ const STATUS_COLOR: Record<Member["status"], string> = {
   offline: "#6b7280",
 };
 
-const GRID_SLOTS = 8;
+const GRID_SLOTS = 50;
 
 // ─── Pixel Character ───────────────────────────────────────────────────────────
 
@@ -394,6 +394,7 @@ function Desk({ member, tasks, delay }: { member: Member | null; tasks: Task[]; 
 
 export default function OfficeView() {
   const { members, tasks } = useDashboardStore();
+  const [zoom, setZoom] = useState<number>(75);
   const slots: (Member | null)[] = [
     ...members,
     ...Array(Math.max(0, GRID_SLOTS - members.length)).fill(null),
@@ -402,13 +403,35 @@ export default function OfficeView() {
   return (
     <div className="flex-1 overflow-auto" style={{ background: "var(--color-bg-base)" }}>
       {/* Header */}
-      <div className="px-6 pt-6 pb-2" style={{ borderBottom: "1px solid var(--color-bg-divider)" }}>
-        <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}>
-          픽셀 오피스
-        </h2>
-        <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-          {members.filter((m) => m.status === "active").length}명 활성 · {members.length}명 총원
-        </p>
+      <div className="px-6 pt-6 pb-2 flex items-start justify-between" style={{ borderBottom: "1px solid var(--color-bg-divider)" }}>
+        <div>
+          <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}>
+            픽셀 오피스
+          </h2>
+          <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+            {members.filter((m) => m.status === "active").length}명 활성 · {members.length}명 총원 · 최대 {GRID_SLOTS}석
+          </p>
+        </div>
+        {/* Zoom controls */}
+        <div className="flex items-center gap-1.5" style={{ marginTop: 4 }}>
+          <span style={{ fontSize: 11, color: "var(--color-text-dimmed)", fontFamily: "var(--font-mono)", marginRight: 4 }}>확대</span>
+          {[50, 75, 100].map((z) => (
+            <button
+              key={z}
+              onClick={() => setZoom(z)}
+              style={{
+                fontSize: 11, padding: "3px 8px", borderRadius: 5,
+                fontFamily: "var(--font-mono)",
+                background: zoom === z ? "var(--color-bg-elevated)" : "transparent",
+                color: zoom === z ? "var(--color-text-primary)" : "var(--color-text-dimmed)",
+                border: zoom === z ? "1px solid var(--color-bg-border)" : "1px solid transparent",
+                cursor: "pointer",
+              }}
+            >
+              {z}%
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Room */}
@@ -427,7 +450,7 @@ export default function OfficeView() {
             display: "flex", alignItems: "center", justifyContent: "space-around",
             paddingInline: 80,
           }}>
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
               <div key={i} style={{
                 width: 36, height: 5, background: "rgba(180,210,255,0.18)",
                 borderRadius: 2, boxShadow: "0 0 8px 3px rgba(140,180,255,0.12)",
@@ -459,10 +482,15 @@ export default function OfficeView() {
               backgroundImage: "repeating-conic-gradient(#16213a 0% 25%, #1b2a48 0% 50%)",
               backgroundSize: "28px 28px",
               padding: "28px 24px 20px",
+              overflow: "auto",
             }}>
               <div
-                className="grid gap-x-6 gap-y-10"
-                style={{ gridTemplateColumns: "repeat(4, 96px)", justifyContent: "center" }}
+                className="grid gap-x-5 gap-y-8"
+                style={{
+                  gridTemplateColumns: "repeat(10, 96px)",
+                  justifyContent: "center",
+                  zoom: zoom / 100,
+                }}
               >
                 {slots.map((m, i) => (
                   <Desk key={i} member={m} tasks={tasks} delay={i} />
