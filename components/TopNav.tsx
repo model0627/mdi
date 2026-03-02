@@ -10,6 +10,7 @@ const views = [
   { id: "office",    label: "픽셀 오피스" },
   { id: "dashboard", label: "대시보드" },
   { id: "tasks",     label: "작업 목록" },
+  { id: "kanban",    label: "칸반" },
   { id: "gantt",     label: "간트 차트" },
 ];
 
