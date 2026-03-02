@@ -632,31 +632,12 @@ export default function OfficeView() {
           boxShadow: "0 8px 48px rgba(0,0,0,0.8), 0 0 0 1px #5a3010, inset 0 0 60px rgba(20,8,0,0.5)",
           imageRendering: "pixelated",
         }}>
-          {/* ── Arcade LED Ceiling ── */}
+          {/* ── Ceiling ── */}
           <div style={{
-            height: 18,
-            background: "linear-gradient(180deg, #120a04 0%, #1a0e06 100%)",
+            height: 14,
+            background: "linear-gradient(180deg, #120a04 0%, #1c1008 100%)",
             borderBottom: "2px solid #3a1e08",
-            display: "flex", alignItems: "center",
-            paddingInline: 10, gap: 6,
-            overflow: "hidden",
-          }}>
-            {/* LED strip: coloured dots */}
-            {(["#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
-               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
-               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
-               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
-               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
-               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
-            ] as string[]).map((color, i) => (
-              <div key={i} style={{
-                width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                background: color,
-                boxShadow: `0 0 5px 2px ${color}99`,
-                animation: `blink-led ${1.8 + (i % 6) * 0.5}s ease-in-out ${(i * 0.18) % 2.5}s infinite`,
-              }} />
-            ))}
-          </div>
+          }} />
 
           {/* ── Floor row: left-wall | desks | right-wall ── */}
           <div style={{ display: "flex", alignItems: "stretch" }}>
