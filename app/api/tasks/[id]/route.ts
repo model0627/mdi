@@ -17,12 +17,12 @@ export async function GET(
   const task = mdStore.tasks.get(id);
   if (!task) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Read body from MD file
+  // Read body: prefer file content, fall back to in-memory body
   const filePath = path.join(process.cwd(), 'data', 'tasks', `${id}.md`);
-  let body = '';
+  let body = (task as Task & { body?: string }).body ?? '';
   if (fs.existsSync(filePath)) {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    body = matter(raw).content.trim();
+    const fileBody = matter(fs.readFileSync(filePath, 'utf-8')).content.trim();
+    if (fileBody) body = fileBody;
   }
   return NextResponse.json({ ...task, body });
 }
@@ -36,25 +36,33 @@ export async function PATCH(
   const existing = mdStore.tasks.get(id);
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const body = await req.json() as Partial<Task>;
-  const updated: Task = { ...existing, ...body, id };
+  const raw = await req.json() as Partial<Task> & { body?: string };
+  const { body: bodyContent, ...taskFields } = raw;
+  const updated: Task = { ...existing, ...taskFields, id };
 
   // Auto-track actual work time
   const now = new Date().toISOString();
-  if (body.status === 'progress' && !existing.actualStart) {
+  if (taskFields.status === 'progress' && !existing.actualStart) {
     updated.actualStart = now;
   }
-  if (body.status === 'done' && !updated.actualEnd) {
+  if (taskFields.status === 'done' && !updated.actualEnd) {
     updated.actualEnd = now;
   }
 
-  mdStore.tasks.set(id, updated);
-  mdStore.writeTaskFile(updated);
+  const updatedWithBody = bodyContent !== undefined
+    ? { ...updated, body: bodyContent } as Task & { body: string }
+    : updated;
+  mdStore.tasks.set(id, updatedWithBody as Task);
+  if (bodyContent !== undefined) {
+    mdStore.writeTaskBodyContent(updated, bodyContent);
+  } else {
+    mdStore.writeTaskFile(updated);
+  }
   mdStore.broadcast('task:update', updated);
 
   // WebSocket push: notify assignee on assignment change
-  if (body.assigneeId && body.assigneeId !== existing.assigneeId) {
-    wsManager.notify(body.assigneeId, {
+  if (taskFields.assigneeId && taskFields.assigneeId !== existing.assigneeId) {
+    wsManager.notify(taskFields.assigneeId, {
       type: 'task_assigned',
       task: { id, title: updated.title, priority: updated.priority },
     });
@@ -63,7 +71,7 @@ export async function PATCH(
   // WebSocket push: notify reviewer when task moves to review
   // reviewer is not in the core Task type but may exist in file frontmatter
   const reviewer = (updated as unknown as Record<string, unknown>).reviewer as string | undefined;
-  if (body.status === 'review' && reviewer) {
+  if (taskFields.status === 'review' && reviewer) {
     wsManager.notify(reviewer, {
       type: 'task_review',
       task: { id, title: updated.title },
