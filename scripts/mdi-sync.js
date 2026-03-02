@@ -13,10 +13,45 @@
 const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { execSync } = require('child_process');
 
 const SERVER_URL = process.argv[2] || 'ws://192.168.130.36:80/ws';
 const DATA_DIR = path.resolve(__dirname, '../data');
 const RECONNECT_DELAY = 3000;
+
+async function checkConfigVersion() {
+  const MDI_SERVER = process.env.MDI_SERVER || 'http://192.168.130.36:3001';
+  const MEMBER_ID = process.env.MDI_MEMBER_ID;
+  const versionFile = path.join(os.homedir(), '.mdi-version');
+
+  try {
+    const res = await fetch(`${MDI_SERVER}/api/config/version`);
+    if (!res.ok) return;
+    const { version } = await res.json();
+
+    let localVersion = 0;
+    if (fs.existsSync(versionFile)) {
+      localVersion = parseInt(fs.readFileSync(versionFile, 'utf-8').trim(), 10) || 0;
+    }
+
+    if (version > localVersion && MEMBER_ID) {
+      const scriptRes = await fetch(
+        `${MDI_SERVER}/api/config/sync.sh?memberId=${encodeURIComponent(MEMBER_ID)}`
+      );
+      if (!scriptRes.ok) return;
+      const script = await scriptRes.text();
+
+      const tmpScript = path.join(os.tmpdir(), 'mdi-config-update.sh');
+      fs.writeFileSync(tmpScript, script, { mode: 0o755 });
+      execSync(`bash "${tmpScript}"`, { stdio: 'inherit' });
+      fs.writeFileSync(versionFile, String(version), 'utf-8');
+      console.log(`[MDI] 설정 업데이트 완료 (v${localVersion} → v${version})`);
+    }
+  } catch {
+    // 버전 체크 실패는 조용히 무시 — sync 동작에 영향 없음
+  }
+}
 
 let ws = null;
 let watcher = null;
@@ -129,6 +164,7 @@ process.on('SIGINT', () => {
   log(`MDI Data Sync starting...`);
   log(`Server : ${SERVER_URL}`);
   log(`Data   : ${DATA_DIR}`);
+  await checkConfigVersion();
   await startWatcher();
   connect();
 })();

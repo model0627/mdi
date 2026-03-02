@@ -1,5 +1,7 @@
 "use client";
+import { useState } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import InviteModal from "@/components/InviteModal";
 
 interface TopNavProps {
   activeView: string;
@@ -17,8 +19,10 @@ const views = [
 export default function TopNav({ activeView, onViewChange }: TopNavProps) {
   const { projects, tasks, connected } = useDashboardStore();
   const inProgress = tasks.filter((t) => t.status === "progress").length;
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   return (
+    <>
     <header
       className="flex items-center justify-between px-5 py-3 border-b"
       style={{ background: "var(--color-bg-surface)", borderColor: "var(--color-bg-border)", height: 52 }}
@@ -79,6 +83,26 @@ export default function TopNav({ activeView, onViewChange }: TopNavProps) {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowInviteModal(true)}
+            className="flex items-center gap-1.5 rounded text-xs font-semibold transition-colors"
+            style={{
+              height: 28,
+              padding: "0 10px",
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-text-secondary)",
+              border: "1px solid var(--color-bg-border)",
+            }}
+            title="멤버 초대"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <line x1="19" y1="8" x2="19" y2="14"/>
+              <line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+            멤버 초대
+          </button>
+          <button
             className="flex items-center justify-center rounded text-sm font-bold transition-colors"
             style={{ width: 28, height: 28, background: "var(--color-accent-blue)", color: "#fff" }}
             title="새 작업 추가"
@@ -98,5 +122,10 @@ export default function TopNav({ activeView, onViewChange }: TopNavProps) {
         </div>
       </div>
     </header>
+
+    {showInviteModal && (
+      <InviteModal onClose={() => setShowInviteModal(false)} />
+    )}
+  </>
   );
 }

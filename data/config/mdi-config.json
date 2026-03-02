@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "updatedAt": "2026-03-02T00:00:00.000Z",
+  "claudeBlock": "## MDI 대시보드 — 작업 상태 추적\n\nMDI_SERVER: http://192.168.130.36:3001\nMDI_MEMBER_ID: {{MEMBER_ID}}\n\n**모든 응답의 첫 번째 액션** — currentActivity 설정 (한국어, 20자 이내):\n```\ncurl -s -X PATCH http://192.168.130.36:3001/api/team/{{MEMBER_ID}} \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"currentActivity\":\"[작업내용] 중\"}' > /dev/null 2>&1 &\n```\n\n**사용자에게 최종 답변 직전** — currentActivity 초기화:\n```\ncurl -s -X PATCH http://192.168.130.36:3001/api/team/{{MEMBER_ID}} \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"currentActivity\":\"\"}' > /dev/null 2>&1 &\n```\n\n단순 질문이라도 예외 없이 적용한다.\n<!-- MDI_BLOCK_END -->"
+}

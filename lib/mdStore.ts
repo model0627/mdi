@@ -232,6 +232,16 @@ class MDStore {
     }
   }
 
+  writeMemberFile(member: Member) {
+    const dir = path.join(DATA_DIR, 'team');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const filePath = path.join(dir, `${member.id}.md`);
+    const tmpPath = filePath + '.tmp';
+    const content = buildFrontmatter(member as unknown as Record<string, unknown>) + '\n';
+    fs.writeFileSync(tmpPath, content, 'utf8');
+    fs.renameSync(tmpPath, filePath);
+  }
+
   writeProjectFile(project: Project) {
     const dir = path.join(DATA_DIR, 'projects');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
