@@ -27,11 +27,18 @@ const EXPIRE_OPTIONS = [
   { value: 30, label: "30일" },
 ];
 
+function deriveInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  const n = name.trim();
+  return n.length >= 2 ? (n[0] + n[1]).toUpperCase() : n.toUpperCase();
+}
+
 export default function InviteModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [memberId, setMemberId] = useState("");
   const [role, setRole] = useState("");
-  const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
+  const [avatarColorIdx, setAvatarColorIdx] = useState(0);
   const [expireDays, setExpireDays] = useState(7);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -61,9 +68,10 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           memberName: name.trim(),
           memberId: memberId.trim(),
+          initials: deriveInitials(name),
           role: role.trim(),
-          avatarColor,
-          expireDays,
+          avatarColor: avatarColorIdx,
+          expiresInDays: expireDays,
         }),
       });
       const data = await res.json();
@@ -77,7 +85,7 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
     } finally {
       setSaving(false);
     }
-  }, [name, memberId, role, avatarColor, expireDays]);
+  }, [name, memberId, role, avatarColorIdx, expireDays]);
 
   const handleCopy = useCallback(() => {
     if (!result) return;
@@ -221,17 +229,17 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
               <div>
                 <label style={labelStyle}>아바타 색상</label>
                 <div className="flex items-center gap-2">
-                  {AVATAR_COLORS.map((c) => (
+                  {AVATAR_COLORS.map((c, i) => (
                     <button
                       key={c}
                       title={c}
-                      onClick={() => setAvatarColor(c)}
+                      onClick={() => setAvatarColorIdx(i)}
                       style={{
                         width: 24, height: 24,
                         borderRadius: "50%",
                         background: c,
-                        border: avatarColor === c ? "3px solid white" : "3px solid transparent",
-                        outline: avatarColor === c ? `2px solid ${c}` : "none",
+                        border: avatarColorIdx === i ? "3px solid white" : "3px solid transparent",
+                        outline: avatarColorIdx === i ? `2px solid ${c}` : "none",
                         cursor: "pointer",
                         flexShrink: 0,
                       }}
