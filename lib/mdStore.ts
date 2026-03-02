@@ -190,9 +190,21 @@ class MDStore {
     const filePath = path.join(dir, `${task.id}.md`);
 
     const { description: _desc, ...frontmatterTask } = task as Task & { description?: string };
-    void _desc;
 
-    const body = bodyContent.trim() ? '\n\n' + bodyContent + '\n' : '\n\n## 설명\n\n';
+    // If description not in task object, read existing ## 설명 section from file
+    let descToWrite = _desc;
+    if (!descToWrite && fs.existsSync(filePath) && matter) {
+      const existing = matter(fs.readFileSync(filePath, 'utf-8')).content;
+      const m = existing.match(/##\s*설명\s*\n+([\s\S]*?)(?=\n##\s|$)/);
+      if (m) descToWrite = m[1].trim();
+    }
+
+    // Preserve description + append completion body (both must coexist)
+    let body = '';
+    if (descToWrite) body += `\n\n## 설명\n\n${descToWrite}\n`;
+    if (bodyContent.trim()) body += '\n\n' + bodyContent + '\n';
+    if (!body) body = '\n\n## 설명\n\n';
+
     const tmpPath = filePath + '.tmp';
     const content = buildFrontmatter(frontmatterTask as unknown as Record<string, unknown>) + body;
     fs.writeFileSync(tmpPath, content, 'utf8');
