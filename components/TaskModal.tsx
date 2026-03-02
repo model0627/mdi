@@ -54,6 +54,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
   const [bodyDraft, setBodyDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch(`/api/tasks/${taskId}`)
@@ -108,6 +109,44 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
       setCompleting(false);
     }
   }, [task]);
+
+  const buildMarkdown = useCallback(() => {
+    if (!task) return "";
+    const lines = [
+      `# ${task.title}`,
+      ``,
+      `| 항목 | 값 |`,
+      `|------|-----|`,
+      `| ID | ${task.id} |`,
+      `| 상태 | ${task.status} |`,
+      `| 우선순위 | ${task.priority} |`,
+      `| 담당자 | ${task.assigneeId} |`,
+      ...(task.projectId ? [`| 프로젝트 | ${task.projectId} |`] : []),
+      ...(task.created ? [`| 생성일 | ${new Date(task.created).toLocaleString("ko-KR")} |`] : []),
+      ...(task.due ? [`| 마감일 | ${new Date(task.due).toLocaleString("ko-KR")} |`] : []),
+      ``,
+      ...(task.body ? [task.body] : []),
+    ];
+    return lines.join("\n");
+  }, [task]);
+
+  const handleCopyMarkdown = useCallback(async () => {
+    const md = buildMarkdown();
+    await navigator.clipboard.writeText(md);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [buildMarkdown]);
+
+  const handleDownloadMarkdown = useCallback(() => {
+    const md = buildMarkdown();
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${task?.id ?? "task"}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [buildMarkdown, task]);
 
   const isDone = task?.status === "done";
 
@@ -226,6 +265,22 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                   >
                     내용 편집
                   </button>
+                  <div className="flex items-center gap-1.5 flex-1 justify-center">
+                    <button
+                      onClick={handleCopyMarkdown}
+                      title="마크다운 복사"
+                      style={{ fontSize: 11, color: copied ? "var(--color-live)" : "var(--color-text-dimmed)", padding: "5px 10px", borderRadius: 6, border: "1px solid var(--color-bg-border)", display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      {copied ? "✓ 복사됨" : "⎘ 복사"}
+                    </button>
+                    <button
+                      onClick={handleDownloadMarkdown}
+                      title=".md 다운로드"
+                      style={{ fontSize: 11, color: "var(--color-text-dimmed)", padding: "5px 10px", borderRadius: 6, border: "1px solid var(--color-bg-border)", display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      ↓ 다운로드
+                    </button>
+                  </div>
                   <button
                     onClick={handleComplete}
                     disabled={isDone || completing}
