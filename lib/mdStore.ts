@@ -184,6 +184,21 @@ class MDStore {
     fs.renameSync(tmpPath, filePath);
   }
 
+  writeTaskBodyContent(task: Task, bodyContent: string) {
+    const dir = path.join(DATA_DIR, 'tasks');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const filePath = path.join(dir, `${task.id}.md`);
+
+    const { description: _desc, ...frontmatterTask } = task as Task & { description?: string };
+    void _desc;
+
+    const body = bodyContent.trim() ? '\n\n' + bodyContent + '\n' : '\n\n## 설명\n\n';
+    const tmpPath = filePath + '.tmp';
+    const content = buildFrontmatter(frontmatterTask as unknown as Record<string, unknown>) + body;
+    fs.writeFileSync(tmpPath, content, 'utf8');
+    fs.renameSync(tmpPath, filePath);
+  }
+
   async updateMemberField(memberId: string, field: string, value: string): Promise<void> {
     const filePath = path.join(DATA_DIR, 'team', `${memberId}.md`);
     if (!fs.existsSync(filePath)) return;
