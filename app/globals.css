@@ -143,6 +143,19 @@ body { margin: 0; min-height: 100dvh; }
   75%       { transform: translateY(1px) rotate(1deg); }
 }
 
+@keyframes blink-led {
+  0%, 80%, 100% { opacity: 1; }
+  88%           { opacity: 0.08; }
+}
+
+@keyframes flicker-torch {
+  0%, 100% { transform: scaleX(1)   scaleY(1);    opacity: 1;    }
+  20%       { transform: scaleX(0.9) scaleY(1.1);  opacity: 0.92; }
+  40%       { transform: scaleX(1.1) scaleY(0.95); opacity: 1;    }
+  60%       { transform: scaleX(0.95) scaleY(1.05);opacity: 0.88; }
+  80%       { transform: scaleX(1.05) scaleY(0.98);opacity: 0.96; }
+}
+
 @keyframes bubble-float {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-4px); }

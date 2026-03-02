@@ -87,36 +87,73 @@ const GRID_SLOTS = 50;
 
 // ─── Pixel Character ───────────────────────────────────────────────────────────
 
+const SKIN_TONES = ["#f4c89e","#e8b88a","#d4956a","#c17d52","#fce0bc","#e8c49a","#bf8b5e","#f0d0a0"];
+const HAIR_COLORS = ["#1a0a00","#ffd700","#cc2211","#3d2b1f","#224488","#2d5016","#884422","#0d0d0d"];
+const HAT_COLORS  = ["#cc2244","#2244cc","#228844","#884422","#6622aa","#cc8800","#116644","#cc6600"];
+
 function PixelChar({ colorIndex, animDelay = 0, idle = false }: { colorIndex: number; animDelay?: number; idle?: boolean }) {
-  const body = AVATAR_COLORS[colorIndex % AVATAR_COLORS.length];
-  const skin = "#f4c89e";
-  const hair = ["#2d1b0e","#1a0a00","#3d2b1f","#0d0d0d","#4a3728","#1e1208","#2d1b0e","#3d2b1f"][colorIndex % 8];
+  const body     = AVATAR_COLORS[colorIndex % AVATAR_COLORS.length];
+  const skin     = SKIN_TONES[colorIndex % 8];
+  const hair     = HAIR_COLORS[colorIndex % 8];
+  const hasGlasses = colorIndex % 4 === 0;
+  const hasHat     = colorIndex % 5 === 2;
+  const hatColor   = HAT_COLORS[colorIndex % 8];
   const anim = idle
     ? `idle-sway ${5 + animDelay * 0.4}s ease-in-out infinite`
     : `desk-idle ${3.5 + animDelay * 0.3}s ease-in-out infinite`;
+
   return (
     <svg
       width="32" height="48" viewBox="0 0 16 24"
       style={{ imageRendering: "pixelated", animation: anim, animationDelay: `${animDelay}s` }}
       className="pixel-canvas"
     >
-      <rect x="5" y="1" width="6" height="1" fill={hair} />
-      <rect x="4" y="2" width="8" height="1" fill={hair} />
-      <rect x="4" y="3" width="1" height="2" fill={hair} />
-      <rect x="11" y="3" width="1" height="2" fill={hair} />
+      {/* Hat */}
+      {hasHat && <>
+        <rect x="3" y="0" width="10" height="1" fill={hatColor} />
+        <rect x="4" y="1" width="8" height="2" fill={hatColor} />
+        <rect x="4" y="3" width="1" height="1" fill={hatColor} />
+        <rect x="11" y="3" width="1" height="1" fill={hatColor} />
+      </>}
+      {/* Hair (no hat) */}
+      {!hasHat && <>
+        <rect x="5" y="1" width="6" height="1" fill={hair} />
+        <rect x="4" y="2" width="8" height="1" fill={hair} />
+        <rect x="4" y="3" width="1" height="2" fill={hair} />
+        <rect x="11" y="3" width="1" height="2" fill={hair} />
+      </>}
+      {/* Head */}
       <rect x="4" y="2" width="8" height="6" fill={skin} />
-      <rect x="5" y="1" width="6" height="1" fill={skin} />
-      <rect x="6"  y="5" width="1" height="1" fill="#1a1a2e" />
-      <rect x="9"  y="5" width="1" height="1" fill="#1a1a2e" />
-      <rect x="7"  y="7" width="2" height="1" fill="#c4896a" />
-      <rect x="7"  y="8" width="2" height="1" fill={skin} />
+      {!hasHat && <rect x="5" y="1" width="6" height="1" fill={skin} />}
+      {/* Glasses */}
+      {hasGlasses && <>
+        <rect x="5" y="4" width="2" height="2" fill="#1a3a5a" />
+        <rect x="6" y="5" width="1" height="1" fill="#5599cc" />
+        <rect x="7" y="5" width="1" height="1" fill="#1a3a5a" />
+        <rect x="8" y="4" width="2" height="2" fill="#1a3a5a" />
+        <rect x="9" y="5" width="1" height="1" fill="#5599cc" />
+      </>}
+      {/* Eyes (no glasses) */}
+      {!hasGlasses && <>
+        <rect x="6" y="5" width="1" height="1" fill="#1a1a2e" />
+        <rect x="9" y="5" width="1" height="1" fill="#1a1a2e" />
+      </>}
+      {/* Smile */}
+      <rect x="7" y="7" width="2" height="1" fill="#c4896a" />
+      <rect x="7" y="8" width="2" height="1" fill={skin} />
+      {/* Body */}
       <rect x="4"  y="9"  width="8"  height="7"  fill={body} />
       <rect x="2"  y="9"  width="2"  height="5"  fill={body} />
       <rect x="12" y="9"  width="2"  height="5"  fill={body} />
+      {/* Belt detail */}
+      <rect x="4"  y="15" width="8"  height="1"  fill="rgba(0,0,0,0.25)" />
+      {/* Hands */}
       <rect x="2"  y="14" width="2"  height="2"  fill={skin} />
       <rect x="12" y="14" width="2"  height="2"  fill={skin} />
+      {/* Legs */}
       <rect x="5"  y="16" width="3"  height="5"  fill="#1e293b" />
       <rect x="8"  y="16" width="3"  height="5"  fill="#1e293b" />
+      {/* Shoes */}
       <rect x="4"  y="21" width="4"  height="2"  fill="#0f172a" />
       <rect x="8"  y="21" width="4"  height="2"  fill="#0f172a" />
     </svg>
@@ -126,48 +163,57 @@ function PixelChar({ colorIndex, animDelay = 0, idle = false }: { colorIndex: nu
 // ─── Monitor ───────────────────────────────────────────────────────────────────
 
 function Monitor({ badge }: { badge: "!" | "W" | null }) {
-  const border = badge === "W" ? "#4f46e5" : badge === "!" ? "#be123c" : "#252545";
-  const glow   = badge === "W" ? "0 0 14px 4px rgba(99,102,241,0.45)"
-               : badge === "!" ? "0 0 10px 3px rgba(244,63,94,0.3)"
+  const border = badge === "W" ? "#7c3aed" : badge === "!" ? "#dc2626" : "#3a2810";
+  const glow   = badge === "W" ? "0 0 12px 4px rgba(124,58,237,0.6), 0 0 24px 8px rgba(124,58,237,0.2)"
+               : badge === "!" ? "0 0 10px 3px rgba(220,38,38,0.5)"
                : undefined;
   return (
     <div style={{
       width: 48, height: 32,
-      background: "#090d1a",
+      background: "#0a0604",
       border: `2px solid ${border}`,
-      borderRadius: 3,
+      borderRadius: 2,
       display: "flex", alignItems: "center", justifyContent: "center",
       boxShadow: glow,
+      imageRendering: "pixelated",
     }}>
+      {/* CRT bezel inner */}
       <div style={{
         width: 40, height: 24,
-        background: badge === "W" ? "#040c1e" : "#060810",
+        background: badge === "W" ? "#060014" : badge === "!" ? "#100004" : "#080402",
         borderRadius: 1,
         display: "flex", flexDirection: "column",
         padding: "3px 4px", gap: 2,
+        position: "relative", overflow: "hidden",
       }}>
         {badge === "W" ? (
           <>
-            <div style={{ height: 2, background: "#a78bfa", borderRadius: 1, width: "60%" }} />
-            <div style={{ height: 2, background: "#6366f1", borderRadius: 1, width: "85%" }} />
-            <div style={{ height: 2, background: "#818cf8", borderRadius: 1, width: "45%" }} />
-            <div style={{ height: 2, background: "#4f46e5", borderRadius: 1, width: "75%" }} />
-            <div style={{ height: 2, background: "#c4b5fd", borderRadius: 1, width: "30%" }} />
+            <div style={{ height: 2, background: "#c084fc", width: "60%" }} />
+            <div style={{ height: 2, background: "#7c3aed", width: "88%" }} />
+            <div style={{ height: 2, background: "#a78bfa", width: "45%" }} />
+            <div style={{ height: 2, background: "#6d28d9", width: "78%" }} />
+            <div style={{ height: 2, background: "#ddd6fe", width: "32%" }} />
           </>
         ) : badge === "!" ? (
           <>
-            <div style={{ height: 2, background: "#f43f5e", borderRadius: 1, width: "65%" }} />
-            <div style={{ height: 2, background: "#22c55e", borderRadius: 1, width: "80%" }} />
-            <div style={{ height: 2, background: "#f43f5e", borderRadius: 1, width: "40%" }} />
-            <div style={{ height: 2, background: "#22c55e", borderRadius: 1, width: "90%" }} />
+            <div style={{ height: 2, background: "#f87171", width: "68%" }} />
+            <div style={{ height: 2, background: "#4ade80", width: "82%" }} />
+            <div style={{ height: 2, background: "#fb923c", width: "42%" }} />
+            <div style={{ height: 2, background: "#22d3ee", width: "92%" }} />
           </>
         ) : (
           <>
-            <div style={{ height: 2, background: "#1a2235", borderRadius: 1, width: "70%" }} />
-            <div style={{ height: 2, background: "#1a2235", borderRadius: 1, width: "50%" }} />
-            <div style={{ height: 2, background: "#1a2235", borderRadius: 1, width: "85%" }} />
+            <div style={{ height: 2, background: "#2a1808", width: "72%" }} />
+            <div style={{ height: 2, background: "#2a1808", width: "52%" }} />
+            <div style={{ height: 2, background: "#2a1808", width: "88%" }} />
           </>
         )}
+        {/* CRT scanline overlay */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "repeating-linear-gradient(0deg,rgba(0,0,0,0.25) 0px,rgba(0,0,0,0.25) 1px,transparent 1px,transparent 3px)",
+          pointerEvents: "none",
+        }} />
       </div>
     </div>
   );
@@ -230,43 +276,91 @@ function TaskTooltip({ member, tasks }: { member: Member; tasks: Task[] }) {
 
 // ─── Pixel Decorations ─────────────────────────────────────────────────────────
 
-function PixelPlant({ scale = 1 }: { scale?: number }) {
+function PixelTorch() {
   return (
-    <svg width={20 * scale} height={28 * scale} viewBox="0 0 10 14" style={{ imageRendering: "pixelated" }}>
-      <rect x="2" y="10" width="6" height="4" fill="#7c4e28" />
-      <rect x="3" y="9"  width="4" height="1" fill="#a06030" />
-      <rect x="4" y="5"  width="2" height="5" fill="#2d5016" />
-      <rect x="1" y="5"  width="3" height="3" fill="#4a9e26" />
-      <rect x="6" y="4"  width="3" height="3" fill="#3a7d1e" />
-      <rect x="2" y="2"  width="6" height="4" fill="#56b831" />
-      <rect x="3" y="1"  width="4" height="2" fill="#4a9e26" />
-    </svg>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+      <svg width="24" height="36" viewBox="0 0 12 18" style={{ imageRendering: "pixelated" }}>
+        {/* Flame outer */}
+        <rect x="3" y="0" width="6" height="5" fill="#ff6600"
+          style={{ animation: "flicker-torch 0.9s ease-in-out infinite", transformOrigin: "6px 5px" }} />
+        {/* Flame inner */}
+        <rect x="4" y="1" width="4" height="3" fill="#ffcc00"
+          style={{ animation: "flicker-torch 0.7s ease-in-out 0.15s infinite", transformOrigin: "6px 4px" }} />
+        <rect x="5" y="1" width="2" height="2" fill="#ffffff" opacity="0.7" />
+        {/* Torch head */}
+        <rect x="2" y="5" width="8" height="3" fill="#8b6030" />
+        <rect x="3" y="4" width="6" height="1" fill="#a07040" />
+        {/* Handle */}
+        <rect x="4" y="8" width="4" height="7" fill="#6b4820" />
+        <rect x="5" y="8" width="2" height="7" fill="#5a3818" />
+        {/* Mount base */}
+        <rect x="1" y="15" width="10" height="3" fill="#3a2010" />
+        <rect x="2" y="14" width="8" height="1" fill="#4a2e18" />
+      </svg>
+      {/* Glow effect */}
+      <div style={{
+        width: 24, height: 8,
+        background: "radial-gradient(ellipse, rgba(255,160,0,0.35) 0%, transparent 70%)",
+        marginTop: -10, pointerEvents: "none",
+      }} />
+    </div>
   );
 }
 
-function PixelCoffeeStation() {
+function PixelBarrel() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-      <svg width="52" height="44" viewBox="0 0 26 22" style={{ imageRendering: "pixelated" }}>
-        {/* counter */}
-        <rect x="0" y="14" width="26" height="8" fill="#5c4020" />
-        <rect x="0" y="13" width="26" height="1" fill="#8b6035" />
-        {/* machine */}
-        <rect x="2" y="5"  width="9" height="9"  fill="#1e2030" />
-        <rect x="3" y="6"  width="7" height="7"  fill="#141825" />
-        <rect x="4" y="7"  width="3" height="2"  fill="#0a1628" />
-        <rect x="4" y="7"  width="1" height="1"  fill="#22c55e" />
-        <rect x="7" y="11" width="1" height="3"  fill="#2a2a4a" />
-        {/* cup */}
-        <rect x="13" y="10" width="6" height="4" fill="#f0ece8" />
-        <rect x="12" y="11" width="1" height="2" fill="#f0ece8" />
-        <rect x="14" y="11" width="3" height="2" fill="#c07828" />
-        {/* steam */}
-        <rect x="15" y="7"  width="1" height="2" fill="rgba(200,200,200,0.5)" />
-        <rect x="17" y="6"  width="1" height="2" fill="rgba(200,200,200,0.35)" />
-        <rect x="14" y="5"  width="1" height="1" fill="rgba(200,200,200,0.25)" />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+      <svg width="36" height="40" viewBox="0 0 18 20" style={{ imageRendering: "pixelated" }}>
+        {/* Body */}
+        <rect x="3" y="2"  width="12" height="16" fill="#8b6030" />
+        <rect x="2" y="4"  width="14" height="12" fill="#9a6e38" />
+        {/* Hoops */}
+        <rect x="1" y="4"  width="16" height="2" fill="#5a3a18" />
+        <rect x="1" y="9"  width="16" height="2" fill="#5a3a18" />
+        <rect x="1" y="14" width="16" height="2" fill="#5a3a18" />
+        {/* Top/bottom caps */}
+        <rect x="3" y="2"  width="12" height="2" fill="#7a5220" />
+        <rect x="3" y="16" width="12" height="2" fill="#7a5220" />
+        {/* Wood grain */}
+        <rect x="5" y="4"  width="1" height="12" fill="rgba(0,0,0,0.12)" />
+        <rect x="9" y="4"  width="1" height="12" fill="rgba(0,0,0,0.12)" />
+        <rect x="13" y="4" width="1" height="12" fill="rgba(0,0,0,0.12)" />
+        {/* Highlight */}
+        <rect x="4" y="4"  width="2" height="12" fill="rgba(255,255,255,0.06)" />
       </svg>
-      <span style={{ fontSize: 9, color: "#4a5568", fontFamily: "var(--font-mono)" }}>☕ 카페</span>
+    </div>
+  );
+}
+
+function PixelBookshelf() {
+  const bookColors = ["#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#e91e63"];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+      <svg width="56" height="52" viewBox="0 0 28 26" style={{ imageRendering: "pixelated" }}>
+        {/* Shelf frame */}
+        <rect x="0" y="0"  width="28" height="26" fill="#5c3a18" />
+        <rect x="1" y="1"  width="26" height="24" fill="#3a2010" />
+        {/* Shelf planks */}
+        <rect x="1" y="9"  width="26" height="2" fill="#5c3a18" />
+        <rect x="1" y="18" width="26" height="2" fill="#5c3a18" />
+        {/* Books row 1 */}
+        {bookColors.slice(0,6).map((c, i) => (
+          <rect key={i} x={2 + i * 4} y="2" width="3" height="7" fill={c} />
+        ))}
+        {/* Books row 2 */}
+        {bookColors.slice(2,7).map((c, i) => (
+          <rect key={i} x={2 + i * 4 + 1} y="11" width="3" height="7" fill={c} />
+        ))}
+        {/* Books row 3 (shorter) */}
+        {bookColors.slice(1,5).map((c, i) => (
+          <rect key={i} x={3 + i * 5} y="20" width="3" height="5" fill={c} />
+        ))}
+        {/* Book spines highlight */}
+        {bookColors.slice(0,6).map((_, i) => (
+          <rect key={i} x={2 + i * 4} y="2" width="1" height="7" fill="rgba(255,255,255,0.15)" />
+        ))}
+      </svg>
+      <span style={{ fontSize: 9, color: "#7a5830", fontFamily: "var(--font-mono)" }}>📚 서재</span>
     </div>
   );
 }
@@ -439,26 +533,33 @@ function Desk({ member, tasks, delay }: { member: Member | null; tasks: Task[]; 
         {/* Desk top surface — z:3 covers char legs */}
         <div style={{
           position: "absolute", bottom: 7, left: 0, right: 0, zIndex: 3, height: 12,
-          background: member ? "#7c5c2e" : "#2a2e4a",
-          borderTop:   `2px solid ${member ? "#a07840" : "#3a3e60"}`,
-          borderLeft:  `1px solid ${member ? "#8a6835" : "#32365a"}`,
-          borderRight: `1px solid ${member ? "#5c4020" : "#22264a"}`,
-          borderRadius: "3px 3px 0 0",
+          background: member ? "#8b6830" : "#2a1e10",
+          borderTop:   `2px solid ${member ? "#b08840" : "#3a2810"}`,
+          borderLeft:  `1px solid ${member ? "#9a7238" : "#2a1e10"}`,
+          borderRight: `1px solid ${member ? "#6a4e22" : "#1e160a"}`,
+          borderRadius: "2px 2px 0 0",
         }}>
+          {/* Pixel keyboard on desk */}
           {member && (
-            <div style={{
-              position: "absolute", top: 3, left: "50%", transform: "translateX(-50%)",
-              width: 28, height: 4, background: "#5a4018", borderRadius: 1,
-            }} />
+            <svg
+              width="30" height="7" viewBox="0 0 15 3.5"
+              style={{ imageRendering: "pixelated", position: "absolute", top: 2, left: "50%", transform: "translateX(-50%)" }}
+            >
+              <rect x="0"   y="0" width="15"  height="3.5" fill="#1a1628" rx="0.3" />
+              {[0,1.8,3.6,5.4,7.2,9,10.8,12.6].map((x,i) => (
+                <rect key={i} x={x + 0.3} y="0.3" width="1.2" height="1.2" fill="#2a2440" />
+              ))}
+              <rect x="3" y="2" width="9" height="1" fill="#2a2440" />
+            </svg>
           )}
         </div>
 
         {/* Desk front face */}
         <div style={{
           position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 3, height: 8,
-          background: member ? "#5c4020" : "#22263e",
-          borderBottom: `1px solid ${member ? "#3a2810" : "#161930"}`,
-          borderRadius: "0 0 3px 3px",
+          background: member ? "#6a4e22" : "#1e160a",
+          borderBottom: `1px solid ${member ? "#3a2810" : "#100a04"}`,
+          borderRadius: "0 0 2px 2px",
         }} />
       </div>
 
@@ -524,52 +625,70 @@ export default function OfficeView() {
       {/* Room */}
       <div className="p-5">
         <div style={{
-          background: "#111827",
-          border: "2px solid #1f2d4a",
-          borderRadius: 10,
+          background: "#120a04",
+          border: "3px solid #3a1e08",
+          borderRadius: 4,
           overflow: "hidden",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,0,20,0.4)",
+          boxShadow: "0 8px 48px rgba(0,0,0,0.8), 0 0 0 1px #5a3010, inset 0 0 60px rgba(20,8,0,0.5)",
+          imageRendering: "pixelated",
         }}>
-          {/* Ceiling lights */}
+          {/* ── Arcade LED Ceiling ── */}
           <div style={{
-            height: 14, background: "linear-gradient(180deg, #1a2545 0%, #151e38 100%)",
-            borderBottom: "1px solid #1f2d4a",
-            display: "flex", alignItems: "center", justifyContent: "space-around",
-            paddingInline: 80,
+            height: 18,
+            background: "linear-gradient(180deg, #120a04 0%, #1a0e06 100%)",
+            borderBottom: "2px solid #3a1e08",
+            display: "flex", alignItems: "center",
+            paddingInline: 10, gap: 6,
+            overflow: "hidden",
           }}>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+            {/* LED strip: coloured dots */}
+            {(["#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
+               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
+               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
+               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
+               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
+               "#ff2244","#ffaa00","#22ff66","#4499ff","#aa22ff","#ff6600",
+            ] as string[]).map((color, i) => (
               <div key={i} style={{
-                width: 36, height: 5, background: "rgba(180,210,255,0.18)",
-                borderRadius: 2, boxShadow: "0 0 8px 3px rgba(140,180,255,0.12)",
+                width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                background: color,
+                boxShadow: `0 0 5px 2px ${color}99`,
+                animation: `blink-led ${1.8 + (i % 6) * 0.5}s ease-in-out ${(i * 0.18) % 2.5}s infinite`,
               }} />
             ))}
           </div>
 
-          {/* Floor row: left-wall | desks | right-wall */}
+          {/* ── Floor row: left-wall | desks | right-wall ── */}
           <div style={{ display: "flex", alignItems: "stretch" }}>
 
-            {/* Left wall — plants + coffee */}
+            {/* Left wall — torch + barrel + torch */}
             <div style={{
               width: 76, flexShrink: 0,
-              backgroundImage: "repeating-conic-gradient(#16213a 0% 25%, #1b2a48 0% 50%)",
-              backgroundSize: "28px 28px",
+              background: "#1e0e06",
+              backgroundImage: [
+                "repeating-linear-gradient(0deg, rgba(0,0,0,0.45) 0px, rgba(0,0,0,0.45) 1px, transparent 1px, transparent 8px)",
+                "repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 14px)",
+              ].join(","),
               display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "space-evenly",
-              padding: "20px 0",
-              borderRight: "1px solid #1f2d4a",
+              padding: "24px 0",
+              borderRight: "2px solid #3a1e08",
             }}>
-              <PixelPlant scale={1.5} />
-              <PixelCoffeeStation />
-              <PixelPlant scale={1.2} />
+              <PixelTorch />
+              <PixelBarrel />
+              <PixelTorch />
             </div>
 
-            {/* Main desk grid */}
+            {/* Main desk grid — warm stone tiles */}
             <div style={{
               flex: 1,
-              backgroundImage: "repeating-conic-gradient(#16213a 0% 25%, #1b2a48 0% 50%)",
-              backgroundSize: "28px 28px",
+              background: "#a07840",
+              backgroundImage: "repeating-conic-gradient(#906830 0% 25%, #a07840 0% 50%)",
+              backgroundSize: "16px 16px",
               padding: "28px 24px 20px",
               overflow: "auto",
+              /* subtle CRT scanlines */
+              boxShadow: "inset 0 0 0 9999px repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px)",
             }}>
               <div
                 className="grid gap-x-5 gap-y-8"
@@ -585,19 +704,22 @@ export default function OfficeView() {
               </div>
             </div>
 
-            {/* Right wall — plants + bulletin board */}
+            {/* Right wall — torch + bookshelf + bulletin */}
             <div style={{
               width: 76, flexShrink: 0,
-              backgroundImage: "repeating-conic-gradient(#16213a 0% 25%, #1b2a48 0% 50%)",
-              backgroundSize: "28px 28px",
+              background: "#1e0e06",
+              backgroundImage: [
+                "repeating-linear-gradient(0deg, rgba(0,0,0,0.45) 0px, rgba(0,0,0,0.45) 1px, transparent 1px, transparent 8px)",
+                "repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 14px)",
+              ].join(","),
               display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "space-evenly",
-              padding: "20px 0",
-              borderLeft: "1px solid #1f2d4a",
+              padding: "24px 0",
+              borderLeft: "2px solid #3a1e08",
             }}>
-              <PixelPlant scale={1.3} />
+              <PixelTorch />
+              <PixelBookshelf />
               <BulletinBoard tasks={tasks} />
-              <PixelPlant scale={1.5} />
             </div>
           </div>
         </div>
