@@ -88,11 +88,35 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
   }, [name, memberId, role, avatarColorIdx, expireDays]);
 
   const handleCopy = useCallback(() => {
-    if (!result) return;
-    navigator.clipboard.writeText(result.inviteUrl).then(() => {
+    if (!result?.inviteUrl) return;
+    const doCopy = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(result.inviteUrl).then(doCopy).catch(() => {
+        // fallback for HTTP (non-secure context)
+        const el = document.createElement("textarea");
+        el.value = result.inviteUrl;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+        doCopy();
+      });
+    } else {
+      const el = document.createElement("textarea");
+      el.value = result.inviteUrl;
+      el.style.position = "fixed";
+      el.style.opacity = "0";
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      doCopy();
+    }
   }, [result]);
 
   const inputStyle = {
@@ -149,23 +173,38 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div
-              className="rounded-lg p-3 flex items-center gap-2"
-              style={{ background: "var(--color-bg-hover, rgba(255,255,255,0.04))", border: "1px solid var(--color-bg-border)" }}
+              className="rounded-lg flex items-center gap-0"
+              style={{ background: "var(--color-bg-hover, rgba(255,255,255,0.04))", border: "1px solid var(--color-bg-border)", overflow: "hidden" }}
             >
-              <span
-                className="flex-1 truncate"
-                style={{ fontSize: 12, color: "var(--color-text-secondary)", fontFamily: "monospace" }}
-              >
-                {result.inviteUrl}
-              </span>
+              <input
+                readOnly
+                value={result.inviteUrl}
+                onFocus={(e) => e.target.select()}
+                style={{
+                  flex: 1,
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  padding: "10px 12px",
+                  fontSize: 12,
+                  color: "var(--color-text-primary)",
+                  fontFamily: "monospace",
+                  minWidth: 0,
+                }}
+              />
               <button
                 onClick={handleCopy}
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
-                  color: copied ? "var(--color-live, #22c55e)" : "var(--color-accent, #5b6cf8)",
+                  color: copied ? "#22c55e" : "#fff",
+                  background: copied ? "rgba(34,197,94,0.15)" : "var(--color-accent, #5b6cf8)",
                   whiteSpace: "nowrap",
                   flexShrink: 0,
+                  padding: "10px 14px",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background 0.2s, color 0.2s",
                 }}
               >
                 {copied ? "복사됨 ✓" : "복사"}

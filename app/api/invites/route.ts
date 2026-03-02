@@ -137,5 +137,9 @@ export async function POST(req: NextRequest) {
   mdStore.members.set(member.id, member);
   mdStore.broadcast('member:update', member);
 
-  return NextResponse.json(invite, { status: 201 });
+  const proto = req.headers.get('x-forwarded-proto') ?? 'http';
+  const host = req.headers.get('host') ?? 'localhost:3001';
+  const inviteUrl = `${proto}://${host}/invite/${token}`;
+
+  return NextResponse.json({ ...invite, inviteUrl }, { status: 201 });
 }
