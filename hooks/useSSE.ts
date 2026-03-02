@@ -4,7 +4,7 @@ import { useDashboardStore } from '@/stores/dashboardStore';
 import type { Task, Project, Member } from '@/lib/data';
 
 export function useSSE() {
-  const { setAll, updateTask, removeTask, updateProject, updateMember, setConnected } =
+  const { setAll, updateTask, removeTask, updateProject, updateMember, removeMember, setConnected } =
     useDashboardStore();
   const reconnectDelay = useRef(1000);
   const esRef = useRef<EventSource | null>(null);
@@ -55,6 +55,11 @@ export function useSSE() {
         updateMember(JSON.parse(e.data) as Member);
       });
 
+      es.addEventListener('member:delete', (e: MessageEvent) => {
+        const { id } = JSON.parse(e.data) as { id: string };
+        removeMember(id);
+      });
+
       es.onerror = () => {
         es.close();
         setConnected(false);
@@ -72,5 +77,5 @@ export function useSSE() {
       esRef.current?.close();
       setConnected(false);
     };
-  }, [setAll, updateTask, removeTask, updateProject, updateMember, setConnected]);
+  }, [setAll, updateTask, removeTask, updateProject, updateMember, removeMember, setConnected]);
 }

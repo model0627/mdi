@@ -252,6 +252,11 @@ class MDStore {
     fs.renameSync(tmpPath, filePath);
   }
 
+  deleteMemberFile(id: string) {
+    const filePath = path.join(DATA_DIR, 'team', `${id}.md`);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+
   archiveTaskFile(id: string) {
     const src = path.join(DATA_DIR, 'tasks', `${id}.md`);
     const archiveDir = path.join(DATA_DIR, '.archive');

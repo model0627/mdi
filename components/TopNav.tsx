@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import InviteModal from "@/components/InviteModal";
+import MemberManageModal from "@/components/MemberManageModal";
 
 interface TopNavProps {
   activeView: string;
@@ -20,6 +21,7 @@ export default function TopNav({ activeView, onViewChange }: TopNavProps) {
   const { projects, tasks, connected } = useDashboardStore();
   const inProgress = tasks.filter((t) => t.status === "progress").length;
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
 
   return (
     <>
@@ -83,6 +85,25 @@ export default function TopNav({ activeView, onViewChange }: TopNavProps) {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowManageModal(true)}
+            className="flex items-center gap-1.5 rounded text-xs font-semibold transition-colors"
+            style={{
+              height: 28,
+              padding: "0 10px",
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-text-secondary)",
+              border: "1px solid var(--color-bg-border)",
+            }}
+            title="멤버 관리"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <line x1="23" y1="18" x2="17" y2="18"/>
+            </svg>
+            멤버 관리
+          </button>
+          <button
             onClick={() => setShowInviteModal(true)}
             className="flex items-center gap-1.5 rounded text-xs font-semibold transition-colors"
             style={{
@@ -125,6 +146,9 @@ export default function TopNav({ activeView, onViewChange }: TopNavProps) {
 
     {showInviteModal && (
       <InviteModal onClose={() => setShowInviteModal(false)} />
+    )}
+    {showManageModal && (
+      <MemberManageModal onClose={() => setShowManageModal(false)} />
     )}
   </>
   );

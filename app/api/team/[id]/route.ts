@@ -49,3 +49,21 @@ export async function PATCH(
   const updated = mdStore.members.get(id);
   return NextResponse.json(updated ?? { id, updated: true });
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  await mdStore.init();
+  const { id } = await params;
+
+  if (!mdStore.members.has(id)) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  mdStore.members.delete(id);
+  mdStore.deleteMemberFile(id);
+  mdStore.broadcast('member:delete', { id });
+
+  return NextResponse.json({ deleted: id });
+}
