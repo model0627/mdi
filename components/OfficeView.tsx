@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import type { Member, Task } from "@/lib/data";
 
@@ -9,6 +9,73 @@ const AVATAR_COLORS = [
   "#6366f1", "#ec4899", "#f59e0b", "#10b981",
   "#3b82f6", "#8b5cf6", "#ef4444", "#06b6d4",
 ];
+
+// ─── Idle Behaviors ─────────────────────────────────────────────────────────
+
+const IDLE_BEHAVIORS = [
+  { emoji: "☕", text: "커피 충전 중..." },
+  { emoji: "💬", text: "잡담 중 ㅋㅋ"   },
+  { emoji: "🚽", text: "잠깐만요..."     },
+  { emoji: "😴", text: "z z z"          },
+  { emoji: "📱", text: "폰만 봄"         },
+  { emoji: "🎮", text: "몰래 게임 🤫"   },
+  { emoji: "🍕", text: "점심 뭐먹지..."  },
+  { emoji: "🪟", text: "멍때리는 중"     },
+  { emoji: "🎵", text: "이어폰 끼고 춤"  },
+  { emoji: "🤔", text: "............"   },
+];
+
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; }
+  return Math.abs(h);
+}
+
+function IdleBubble({ memberId }: { memberId: string }) {
+  const [idx, setIdx] = useState(() => hashStr(memberId) % IDLE_BEHAVIORS.length);
+
+  useEffect(() => {
+    const t = setInterval(
+      () => setIdx((p) => (p + 1) % IDLE_BEHAVIORS.length),
+      12000 + (hashStr(memberId) % 8000),   // 12~20s per member
+    );
+    return () => clearInterval(t);
+  }, [memberId]);
+
+  const { emoji, text } = IDLE_BEHAVIORS[idx];
+
+  return (
+    <div style={{
+      animation: "bubble-pop 0.35s ease both",
+      transform: "translateX(-50%)",
+      position: "relative",
+      whiteSpace: "nowrap",
+    }}>
+      {/* bubble content */}
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 4,
+        background: "rgba(8, 12, 26, 0.92)",
+        border: "1px solid rgba(80, 100, 180, 0.32)",
+        borderRadius: 8, padding: "3px 9px",
+        fontSize: 10, color: "#5a6a8a",
+        fontFamily: "var(--font-mono)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.65)",
+        animation: "bubble-float 4s ease-in-out 0.35s infinite",
+      }}>
+        <span>{emoji}</span>
+        <span>{text}</span>
+      </div>
+      {/* tail */}
+      <div style={{
+        position: "absolute", top: "100%", left: "50%", marginLeft: -4,
+        width: 0, height: 0,
+        borderLeft: "4px solid transparent",
+        borderRight: "4px solid transparent",
+        borderTop: "5px solid rgba(80, 100, 180, 0.32)",
+      }} />
+    </div>
+  );
+}
 
 const STATUS_COLOR: Record<Member["status"], string> = {
   active:  "#22c55e",
@@ -20,14 +87,17 @@ const GRID_SLOTS = 50;
 
 // ─── Pixel Character ───────────────────────────────────────────────────────────
 
-function PixelChar({ colorIndex, animDelay = 0 }: { colorIndex: number; animDelay?: number }) {
+function PixelChar({ colorIndex, animDelay = 0, idle = false }: { colorIndex: number; animDelay?: number; idle?: boolean }) {
   const body = AVATAR_COLORS[colorIndex % AVATAR_COLORS.length];
   const skin = "#f4c89e";
   const hair = ["#2d1b0e","#1a0a00","#3d2b1f","#0d0d0d","#4a3728","#1e1208","#2d1b0e","#3d2b1f"][colorIndex % 8];
+  const anim = idle
+    ? `idle-sway ${5 + animDelay * 0.4}s ease-in-out infinite`
+    : `desk-idle ${3.5 + animDelay * 0.3}s ease-in-out infinite`;
   return (
     <svg
       width="32" height="48" viewBox="0 0 16 24"
-      style={{ imageRendering: "pixelated", animation: `desk-idle ${3.5 + animDelay * 0.3}s ease-in-out infinite`, animationDelay: `${animDelay}s` }}
+      style={{ imageRendering: "pixelated", animation: anim, animationDelay: `${animDelay}s` }}
       className="pixel-canvas"
     >
       <rect x="5" y="1" width="6" height="1" fill={hair} />
@@ -263,6 +333,12 @@ function Desk({ member, tasks, delay }: { member: Member | null; tasks: Task[]; 
     }
   }
 
+  const isIdle = !!member
+    && member.status !== "offline"
+    && !member.currentActivity
+    && inProgress === 0
+    && inReview === 0;
+
   const statusColor = member ? STATUS_COLOR[member.status] : undefined;
 
   return (
@@ -330,9 +406,20 @@ function Desk({ member, tasks, delay }: { member: Member | null; tasks: Task[]; 
               </div>
             )}
 
+            {/* Idle bubble — floats above character head */}
+            {isIdle && (
+              <div style={{ position: "absolute", bottom: 71, left: "50%", zIndex: 15, pointerEvents: "none" }}>
+                <IdleBubble memberId={member.id} />
+              </div>
+            )}
+
             {/* Character — z:2, in front of monitor */}
             <div style={{ position: "absolute", bottom: 19, left: "50%", transform: "translateX(-50%)", zIndex: 2 }}>
-              <PixelChar colorIndex={member.avatarColor} animDelay={delay * 0.3} />
+              <PixelChar
+                colorIndex={member.avatarColor}
+                animDelay={delay * 0.3}
+                idle={isIdle}
+              />
             </div>
           </>
         ) : (

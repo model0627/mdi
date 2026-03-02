@@ -143,6 +143,23 @@ body { margin: 0; min-height: 100dvh; }
   75%       { transform: translateY(1px) rotate(1deg); }
 }
 
+@keyframes bubble-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes bubble-pop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  65%  { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes idle-sway {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30%       { transform: translateY(-2px) rotate(-2deg); }
+  70%       { transform: translateY(1px) rotate(2deg); }
+}
+
 @keyframes typing {
   0%, 60%, 100% { opacity: 0; }
   30%            { opacity: 1; }
