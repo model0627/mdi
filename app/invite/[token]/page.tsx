@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import InvitePageClient from "./InvitePageClient";
+import fs from "fs";
+import path from "path";
 
 interface InviteData {
   token: string;
@@ -12,20 +14,65 @@ interface InviteData {
   expired: boolean;
 }
 
-async function getInvite(token: string): Promise<InviteData | null> {
-  // On Vercel use self URL; locally use MDI server or NEXT_PUBLIC_API_BASE
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : (process.env.NEXT_PUBLIC_API_BASE ?? 'http://192.168.130.36:3001');
+interface StoredInvite {
+  token: string;
+  memberId: string;
+  memberName: string;
+  initials: string;
+  role: string;
+  avatarColor: number;
+  status: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+// Decode self-contained base64url token (Vercel-compatible, no storage needed)
+function tryDecodeToken(token: string): InviteData | null {
   try {
-    const res = await fetch(`${baseUrl}/api/invites/${token}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json();
+    const decoded = JSON.parse(Buffer.from(token, "base64url").toString("utf-8"));
+    if (decoded.v === 1 && decoded.memberId && decoded.expiresAt) {
+      return {
+        token,
+        memberId: decoded.memberId,
+        memberName: decoded.memberName,
+        role: decoded.role,
+        createdBy: "",
+        expiresAt: decoded.expiresAt,
+        used: false,
+        expired: new Date(decoded.expiresAt) < new Date(),
+      };
+    }
+  } catch { /* not a base64url token */ }
+  return null;
+}
+
+// Fallback: read from local file system (legacy hex tokens)
+function readInviteFile(token: string): InviteData | null {
+  const IS_VERCEL = process.env.VERCEL === "1";
+  const INVITES_DIR = IS_VERCEL
+    ? "/tmp/mdi/invites"
+    : path.join(process.cwd(), "data", "invites");
+  const filePath = path.join(INVITES_DIR, `${token}.json`);
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const inv = JSON.parse(fs.readFileSync(filePath, "utf-8")) as StoredInvite;
+    return {
+      token: inv.token,
+      memberId: inv.memberId,
+      memberName: inv.memberName,
+      role: inv.role,
+      createdBy: "",
+      expiresAt: inv.expiresAt,
+      used: inv.status === "used",
+      expired: inv.status === "expired" || new Date(inv.expiresAt) < new Date(),
+    };
   } catch {
     return null;
   }
+}
+
+function getInvite(token: string): InviteData | null {
+  return tryDecodeToken(token) ?? readInviteFile(token);
 }
 
 export default async function InvitePage({
@@ -34,7 +81,7 @@ export default async function InvitePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const invite = await getInvite(token);
+  const invite = getInvite(token);
 
   if (!invite) {
     notFound();
