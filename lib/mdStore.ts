@@ -349,10 +349,10 @@ class MDStore {
     }
   }
 
-  writeMemberFile(member: Member): void {
+  async writeMemberFile(member: Member): Promise<void> {
     const content = buildFrontmatter(member as unknown as Record<string, unknown>) + '\n';
     if (IS_VERCEL) {
-      this.blobPutFile(`team/${member.id}.md`, content).catch(console.error);
+      await this.blobPutFile(`team/${member.id}.md`, content);
     } else {
       const dir = path.join(LOCAL_DATA_DIR, 'team');
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });

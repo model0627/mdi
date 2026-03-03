@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
     role: body.role,
     status: 'offline',
   };
-  mdStore.writeMemberFile(member);
+  await mdStore.writeMemberFile(member);
   mdStore.members.set(member.id, member);
   mdStore.broadcast('member:update', member);
 
