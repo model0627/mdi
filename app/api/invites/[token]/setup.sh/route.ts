@@ -57,7 +57,9 @@ export async function GET(
     });
   }
 
-  const baseUrl = req.nextUrl.origin;
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || req.nextUrl.host;
+  const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
+  const baseUrl = `${proto}://${host}`;
   const { memberId } = invite;
 
   const script = `#!/bin/bash

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import { Copy, Check, RefreshCw } from "lucide-react";
 
 const AVATAR_COLORS = [
   "#6366f1", "#ec4899", "#f59e0b", "#10b981",
@@ -28,6 +29,25 @@ export default function MemberManageModal({ onClose }: Props) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copyingId, setCopyingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  async function handleCopyInviteLink(id: string) {
+    setCopyingId(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/team/${id}/reinvite`, { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json() as { inviteUrl: string };
+      await navigator.clipboard.writeText(data.inviteUrl);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "링크 복사 실패");
+    } finally {
+      setCopyingId(null);
+    }
+  }
 
   async function handleDelete(id: string) {
     setDeleting(id);
@@ -137,8 +157,31 @@ export default function MemberManageModal({ onClose }: Props) {
                 </div>
               </div>
 
-              {/* Delete */}
+              {/* Actions */}
               <div className="flex items-center gap-2">
+                {/* Copy invite link */}
+                <button
+                  onClick={() => handleCopyInviteLink(m.id)}
+                  disabled={copyingId === m.id}
+                  title="초대 링크 재발급 후 복사"
+                  className="flex items-center gap-1 text-xs rounded px-2 py-1 transition-colors"
+                  style={{
+                    background: copiedId === m.id ? "rgba(34,197,94,0.15)" : "transparent",
+                    color: copiedId === m.id ? "#22c55e" : "var(--color-text-dimmed)",
+                    border: `1px solid ${copiedId === m.id ? "#22c55e" : "var(--color-bg-border)"}`,
+                    cursor: copyingId === m.id ? "not-allowed" : "pointer",
+                    opacity: copyingId === m.id ? 0.6 : 1,
+                  }}
+                >
+                  {copyingId === m.id ? (
+                    <RefreshCw size={11} className="animate-spin" />
+                  ) : copiedId === m.id ? (
+                    <><Check size={11} /><span>복사됨</span></>
+                  ) : (
+                    <><Copy size={11} /><span>초대링크</span></>
+                  )}
+                </button>
+
                 {confirmId === m.id ? (
                   <>
                     <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>정말요?</span>
