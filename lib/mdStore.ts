@@ -396,6 +396,20 @@ class MDStore {
     }
   }
 
+  deleteProjectFile(id: string): void {
+    if (IS_VERCEL) {
+      _blobList({ prefix: `projects/${id}.md` })
+        .then(({ blobs }: { blobs: { url: string }[] }) => {
+          const match = blobs.find((b) => b.url.includes(`projects/${id}.md`));
+          if (match) _blobDel(match.url);
+        })
+        .catch(console.error);
+    } else {
+      const filePath = path.join(LOCAL_DATA_DIR, 'projects', `${id}.md`);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+  }
+
   archiveTaskFile(id: string): void {
     if (IS_VERCEL) {
       this.blobReadFile(`tasks/${id}.md`)

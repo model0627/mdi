@@ -11,6 +11,7 @@ interface DashboardState {
   addTask: (task: Task) => void;
   removeTask: (id: string) => void;
   updateProject: (project: Project) => void;
+  removeProject: (id: string) => void;
   updateMember: (member: Member) => void;
   removeMember: (id: string) => void;
   setConnected: (v: boolean) => void;
@@ -44,6 +45,9 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         ? s.projects.map((p) => (p.id === project.id ? project : p))
         : [...s.projects, project],
     })),
+
+  removeProject: (id) =>
+    set((s) => ({ projects: s.projects.filter((p) => p.id !== id) })),
 
   updateMember: (member) =>
     set((s) => ({

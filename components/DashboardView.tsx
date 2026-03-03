@@ -13,12 +13,13 @@ import CreateProjectModal from "./CreateProjectModal";
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
-function ProjectCard({ project, tasks, members, index, onGoToTasks }: {
+function ProjectCard({ project, tasks, members, index, onGoToTasks, onDelete }: {
   project: Project;
   tasks: Task[];
   members: Member[];
   index: number;
   onGoToTasks: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const ptasks = tasks.filter((t) => t.projectId === project.id);
   const done = ptasks.filter((t) => t.status === "done" || t.status === "cancelled").length;
@@ -53,12 +54,29 @@ function ProjectCard({ project, tasks, members, index, onGoToTasks }: {
           >
             {project.name}
           </h3>
-          <span
-            className="text-xs shrink-0"
-            style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}
-          >
-            {project.startDate.slice(0, 10).slice(5)} – {project.endDate.slice(0, 10).slice(5)}
-          </span>
+          <div className="flex items-center gap-1 shrink-0">
+            <span
+              className="text-xs"
+              style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}
+            >
+              {project.startDate.slice(0, 10).slice(5)} – {project.endDate.slice(0, 10).slice(5)}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm(`"${project.name}" 프로젝트를 삭제할까요?\n(작업 데이터는 유지됩니다)`)) {
+                  onDelete(project.id);
+                }
+              }}
+              className="rounded p-0.5 transition-colors"
+              style={{ color: "var(--color-text-dimmed)", background: "transparent", border: "none", cursor: "pointer", lineHeight: 1 }}
+              title="프로젝트 삭제"
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4H5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <p className="text-xs mb-3" style={{ color: "var(--color-text-muted)" }}>
@@ -274,9 +292,14 @@ function MemberCard({ member, tasks, index, onTaskClick }: {
 // ─── Dashboard View ───────────────────────────────────────────────────────────
 
 export default function DashboardView({ onGoToTasks }: { onGoToTasks?: (projectId: string) => void } = {}) {
-  const { projects, members, tasks } = useDashboardStore();
+  const { projects, members, tasks, removeProject } = useDashboardStore();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
+
+  const handleDeleteProject = async (id: string) => {
+    await fetch(`/api/projects/${id}`, { method: "DELETE" });
+    removeProject(id);
+  };
 
   return (
     <div className="flex-1 overflow-auto p-5" style={{ background: "var(--color-bg-base)" }}>
@@ -304,7 +327,7 @@ export default function DashboardView({ onGoToTasks }: { onGoToTasks?: (projectI
         </div>
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
           {projects.map((p, i) => (
-            <ProjectCard key={p.id} project={p} tasks={tasks} members={members} index={i} onGoToTasks={onGoToTasks ?? (() => {})} />
+            <ProjectCard key={p.id} project={p} tasks={tasks} members={members} index={i} onGoToTasks={onGoToTasks ?? (() => {})} onDelete={handleDeleteProject} />
           ))}
         </div>
       </section>
