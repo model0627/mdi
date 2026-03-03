@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { Copy, Check, RefreshCw } from "lucide-react";
+import { Copy, RefreshCw } from "lucide-react";
 
 const AVATAR_COLORS = [
   "#6366f1", "#ec4899", "#f59e0b", "#10b981",
@@ -30,35 +30,41 @@ export default function MemberManageModal({ onClose }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [setupPopup, setSetupPopup] = useState<{ id: string; inviteUrl: string; setupUrl: string } | null>(null);
+  const [copiedWhat, setCopiedWhat] = useState<"curl" | "url" | null>(null);
 
-  async function handleCopyInviteLink(id: string) {
+  async function handleReinvite(id: string) {
     setCopyingId(id);
     setError(null);
     try {
       const res = await fetch(`/api/team/${id}/reinvite`, { method: "POST" });
       if (!res.ok) throw new Error(await res.text());
-      const data = await res.json() as { inviteUrl: string };
-      // clipboard API requires HTTPS or localhost; fallback for HTTP
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(data.inviteUrl);
-      } else {
-        const el = document.createElement("textarea");
-        el.value = data.inviteUrl;
-        el.style.position = "fixed";
-        el.style.opacity = "0";
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand("copy");
-        document.body.removeChild(el);
-      }
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
+      const data = await res.json() as { inviteUrl: string; setupUrl: string };
+      setSetupPopup({ id, inviteUrl: data.inviteUrl, setupUrl: data.setupUrl });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "링크 복사 실패");
+      setError(e instanceof Error ? e.message : "링크 생성 실패");
     } finally {
       setCopyingId(null);
     }
+  }
+
+  function copyToClipboard(text: string, which: "curl" | "url") {
+    const doIt = () => {
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(doIt);
+    } else {
+      doIt();
+    }
+    setCopiedWhat(which);
+    setTimeout(() => setCopiedWhat(null), 2000);
   }
 
   async function handleDelete(id: string) {
@@ -171,24 +177,22 @@ export default function MemberManageModal({ onClose }: Props) {
 
               {/* Actions */}
               <div className="flex items-center gap-2">
-                {/* Copy invite link */}
+                {/* Reinvite */}
                 <button
-                  onClick={() => handleCopyInviteLink(m.id)}
+                  onClick={() => handleReinvite(m.id)}
                   disabled={copyingId === m.id}
-                  title="초대 링크 재발급 후 복사"
+                  title="setup 링크 재발급"
                   className="flex items-center gap-1 text-xs rounded px-2 py-1 transition-colors"
                   style={{
-                    background: copiedId === m.id ? "rgba(34,197,94,0.15)" : "transparent",
-                    color: copiedId === m.id ? "#22c55e" : "var(--color-text-dimmed)",
-                    border: `1px solid ${copiedId === m.id ? "#22c55e" : "var(--color-bg-border)"}`,
+                    background: setupPopup?.id === m.id ? "rgba(99,102,241,0.15)" : "transparent",
+                    color: setupPopup?.id === m.id ? "#818cf8" : "var(--color-text-dimmed)",
+                    border: `1px solid ${setupPopup?.id === m.id ? "#818cf8" : "var(--color-bg-border)"}`,
                     cursor: copyingId === m.id ? "not-allowed" : "pointer",
                     opacity: copyingId === m.id ? 0.6 : 1,
                   }}
                 >
                   {copyingId === m.id ? (
                     <RefreshCw size={11} className="animate-spin" />
-                  ) : copiedId === m.id ? (
-                    <><Check size={11} /><span>복사됨</span></>
                   ) : (
                     <><Copy size={11} /><span>초대링크</span></>
                   )}
@@ -240,6 +244,86 @@ export default function MemberManageModal({ onClose }: Props) {
             </div>
           ))}
         </div>
+
+        {/* Setup popup */}
+        {setupPopup && (
+          <div
+            className="mx-4 mb-3 rounded-lg flex flex-col gap-2 p-3"
+            style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.3)" }}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold" style={{ color: "#818cf8" }}>
+                setup 링크 발급됨
+              </span>
+              <button
+                onClick={() => setSetupPopup(null)}
+                style={{ color: "var(--color-text-dimmed)", fontSize: 14, lineHeight: 1, cursor: "pointer" }}
+              >
+                ×
+              </button>
+            </div>
+            {/* curl command */}
+            <div>
+              <p className="text-xs mb-1" style={{ color: "var(--color-text-dimmed)" }}>터미널 자동 설정 (권장)</p>
+              <div className="flex items-center gap-0 rounded overflow-hidden" style={{ border: "1px solid var(--color-bg-border)" }}>
+                <code
+                  className="flex-1 text-xs px-2 py-2"
+                  style={{
+                    background: "rgba(0,0,0,0.3)",
+                    color: "var(--color-text-secondary)",
+                    fontFamily: "monospace",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {`curl -fsSL ${setupPopup.setupUrl} | bash`}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(`curl -fsSL ${setupPopup.setupUrl} | bash`, "curl")}
+                  style={{
+                    fontSize: 11, fontWeight: 600, flexShrink: 0, padding: "8px 12px", border: "none", cursor: "pointer",
+                    background: copiedWhat === "curl" ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)",
+                    color: copiedWhat === "curl" ? "#4ade80" : "#fff",
+                    transition: "background 0.2s, color 0.2s",
+                  }}
+                >
+                  {copiedWhat === "curl" ? "✓" : "복사"}
+                </button>
+              </div>
+            </div>
+            {/* invite URL */}
+            <div>
+              <p className="text-xs mb-1" style={{ color: "var(--color-text-dimmed)" }}>웹 초대 링크</p>
+              <div className="flex items-center gap-0 rounded overflow-hidden" style={{ border: "1px solid var(--color-bg-border)" }}>
+                <code
+                  className="flex-1 text-xs px-2 py-2"
+                  style={{
+                    background: "rgba(0,0,0,0.3)",
+                    color: "var(--color-text-secondary)",
+                    fontFamily: "monospace",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {setupPopup.inviteUrl}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(setupPopup.inviteUrl, "url")}
+                  style={{
+                    fontSize: 11, fontWeight: 600, flexShrink: 0, padding: "8px 12px", border: "none", cursor: "pointer",
+                    background: copiedWhat === "url" ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)",
+                    color: copiedWhat === "url" ? "#4ade80" : "#fff",
+                    transition: "background 0.2s, color 0.2s",
+                  }}
+                >
+                  {copiedWhat === "url" ? "✓" : "복사"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="px-5 pb-3 text-xs" style={{ color: "#f87171" }}>
