@@ -11,7 +11,13 @@ import { useSSE } from "@/hooks/useSSE";
 type View = "office" | "dashboard" | "tasks" | "kanban" | "gantt";
 
 export default function Page() {
-  const [view, setView] = useState<View>("dashboard");
+  const [view, setView] = useState<View>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("task")) return "tasks";
+    }
+    return "dashboard";
+  });
   useSSE();
 
   return (

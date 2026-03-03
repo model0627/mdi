@@ -178,8 +178,27 @@ const STATUS_FILTERS: { value: Status | "all"; label: string }[] = [
 
 export default function TaskListView() {
   const [filter, setFilter] = useState<Status | "all">("all");
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("task");
+    }
+    return null;
+  });
   const { projects, tasks, members } = useDashboardStore();
+
+  const handleTaskClick = (id: string) => {
+    setSelectedTaskId(id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("task", id);
+    window.history.pushState({}, "", url.toString());
+  };
+
+  const handleTaskClose = () => {
+    setSelectedTaskId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("task");
+    window.history.pushState({}, "", url.toString());
+  };
 
   return (
     <div className="flex-1 overflow-auto p-5" style={{ background: "var(--color-bg-base)" }}>
@@ -210,7 +229,7 @@ export default function TaskListView() {
       </div>
 
       {projects.map((p) => (
-        <ProjectSection key={p.id} project={p} tasks={tasks} members={members} filter={filter} onTaskClick={setSelectedTaskId} />
+        <ProjectSection key={p.id} project={p} tasks={tasks} members={members} filter={filter} onTaskClick={handleTaskClick} />
       ))}
 
       {/* 미분류 섹션 */}
@@ -228,13 +247,13 @@ export default function TaskListView() {
             members={members}
             filter={filter}
             defaultOpen={false}
-            onTaskClick={setSelectedTaskId}
+            onTaskClick={handleTaskClick}
           />
         );
       })()}
 
       {selectedTaskId && (
-        <TaskModal taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} />
+        <TaskModal taskId={selectedTaskId} onClose={handleTaskClose} />
       )}
     </div>
   );
