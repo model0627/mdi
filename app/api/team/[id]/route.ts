@@ -42,8 +42,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
   }
 
-  for (const [field, value] of updates) {
-    await mdStore.updateMemberField(id, field, value);
+  try {
+    for (const [field, value] of updates) {
+      await mdStore.updateMemberField(id, field, value);
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: 'update failed', detail: msg }, { status: 500 });
   }
 
   const updated = mdStore.members.get(id);
