@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 type FileKey = "global-claude" | "project-claude" | "memory";
 type TabKey = "mdi-config" | FileKey;
@@ -13,24 +13,42 @@ interface MdiConfigInfo {
 }
 
 const FILE_TABS: { key: FileKey; label: string; placeholder: string }[] = [
-  {
-    key: "global-claude",
-    label: "전역 CLAUDE.md",
-    placeholder: "~/.claude/CLAUDE.md 내용을 붙여넣으세요",
-  },
-  {
-    key: "project-claude",
-    label: "프로젝트 CLAUDE.md",
-    placeholder: "mdi-dashboard/CLAUDE.md 내용을 붙여넣으세요",
-  },
-  {
-    key: "memory",
-    label: "MEMORY.md",
-    placeholder: "~/.claude/projects/.../memory/MEMORY.md 내용을 붙여넣으세요",
-  },
+  { key: "global-claude",  label: "전역 CLAUDE.md",     placeholder: "~/.claude/CLAUDE.md 내용을 붙여넣으세요" },
+  { key: "project-claude", label: "프로젝트 CLAUDE.md", placeholder: "mdi-dashboard/CLAUDE.md 내용을 붙여넣으세요" },
+  { key: "memory",         label: "MEMORY.md",           placeholder: "~/.claude/projects/.../memory/MEMORY.md 내용을 붙여넣으세요" },
 ];
 
 const LS_KEY = (key: FileKey) => `mdi-config-editor:${key}`;
+
+// Try server first, fall back to localStorage
+async function loadContent(key: FileKey): Promise<{ content: string; source: "server" | "local" }> {
+  try {
+    const res = await fetch(`/api/config/editor/${key}`);
+    if (res.ok) {
+      const { content } = await res.json() as { content: string };
+      // Sync to localStorage as backup
+      if (content) localStorage.setItem(LS_KEY(key), content);
+      return { content, source: "server" };
+    }
+  } catch { /* fallthrough */ }
+  return { content: localStorage.getItem(LS_KEY(key)) ?? "", source: "local" };
+}
+
+async function saveContent(key: FileKey, content: string): Promise<"server" | "local"> {
+  try {
+    const res = await fetch(`/api/config/editor/${key}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (res.ok) {
+      localStorage.setItem(LS_KEY(key), content); // keep local in sync
+      return "server";
+    }
+  } catch { /* fallthrough */ }
+  localStorage.setItem(LS_KEY(key), content);
+  return "local";
+}
 
 export default function ConfigView() {
   const [activeTab, setActiveTab] = useState<TabKey>("mdi-config");
@@ -41,28 +59,13 @@ export default function ConfigView() {
   const [mdiError, setMdiError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Local editors (localStorage)
-  const [contents, setContents] = useState<Record<FileKey, string>>({
-    "global-claude": "",
-    "project-claude": "",
-    "memory": "",
-  });
-  const [savedKeys, setSavedKeys] = useState<Record<FileKey, boolean>>({
-    "global-claude": false,
-    "project-claude": false,
-    "memory": false,
-  });
+  // Editor state
+  const [contents, setContents] = useState<Record<FileKey, string>>({ "global-claude": "", "project-claude": "", "memory": "" });
+  const [sources, setSources] = useState<Record<FileKey, "server" | "local" | null>>({ "global-claude": null, "project-claude": null, "memory": null });
+  const [loading, setLoading] = useState<FileKey | null>(null);
+  const [savedTab, setSavedTab] = useState<{ key: FileKey; source: "server" | "local" } | null>(null);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    setContents({
-      "global-claude": localStorage.getItem(LS_KEY("global-claude")) ?? "",
-      "project-claude": localStorage.getItem(LS_KEY("project-claude")) ?? "",
-      "memory": localStorage.getItem(LS_KEY("memory")) ?? "",
-    });
-  }, []);
-
-  // Load MDI config when tab opens
+  // Load MDI config
   useEffect(() => {
     if (activeTab !== "mdi-config") return;
     setMdiLoading(true);
@@ -74,15 +77,31 @@ export default function ConfigView() {
       .finally(() => setMdiLoading(false));
   }, [activeTab]);
 
-  const handleSave = (key: FileKey) => {
-    localStorage.setItem(LS_KEY(key), contents[key]);
-    setSavedKeys((prev) => ({ ...prev, [key]: true }));
-    setTimeout(() => setSavedKeys((prev) => ({ ...prev, [key]: false })), 2000);
+  // Load editor content when tab switches
+  const loadTab = useCallback(async (key: FileKey) => {
+    if (sources[key] !== null) return; // already loaded
+    setLoading(key);
+    const { content, source } = await loadContent(key);
+    setContents((prev) => ({ ...prev, [key]: content }));
+    setSources((prev) => ({ ...prev, [key]: source }));
+    setLoading(null);
+  }, [sources]);
+
+  useEffect(() => {
+    if (activeTab !== "mdi-config") loadTab(activeTab as FileKey);
+  }, [activeTab, loadTab]);
+
+  const handleSave = async (key: FileKey) => {
+    const source = await saveContent(key, contents[key]);
+    setSources((prev) => ({ ...prev, [key]: source }));
+    setSavedTab({ key, source });
+    setTimeout(() => setSavedTab(null), 2500);
   };
 
   const handleClear = (key: FileKey) => {
     localStorage.removeItem(LS_KEY(key));
     setContents((prev) => ({ ...prev, [key]: "" }));
+    setSources((prev) => ({ ...prev, [key]: null }));
   };
 
   const handleCopy = async () => {
@@ -120,7 +139,6 @@ export default function ConfigView() {
           }}
         >
           {f.label}
-          {/* dot if has content */}
           {contents[f.key] && activeTab !== f.key && (
             <span
               className="inline-block w-1.5 h-1.5 rounded-full ml-1.5 mb-0.5"
@@ -146,14 +164,10 @@ export default function ConfigView() {
         <div className="flex flex-col flex-1 overflow-hidden px-5 py-4 gap-3">
           <div className="flex items-center gap-2">
             <div className="flex-1 text-xs" style={{ color: "var(--color-text-dimmed)" }}>
-              {mdiConfig
-                ? `수정: ${new Date(mdiConfig.lastModified).toLocaleString("ko-KR")}`
-                : mdiLoading ? "불러오는 중..." : null}
+              {mdiConfig ? `수정: ${new Date(mdiConfig.lastModified).toLocaleString("ko-KR")}` : mdiLoading ? "불러오는 중..." : null}
             </div>
             {mdiError && (
-              <span className="text-xs px-2 py-1 rounded" style={{ background: "#3f1a1a", color: "#f87171" }}>
-                {mdiError}
-              </span>
+              <span className="text-xs px-2 py-1 rounded" style={{ background: "#3f1a1a", color: "#f87171" }}>{mdiError}</span>
             )}
             <button
               onClick={handleCopy}
@@ -189,9 +203,12 @@ export default function ConfigView() {
     );
   }
 
-  // File editor tabs
+  // File editor tab
   const fileTab = FILE_TABS.find((f) => f.key === activeTab)!;
   const fileKey = activeTab as FileKey;
+  const isLoading = loading === fileKey;
+  const source = sources[fileKey];
+  const isSaved = savedTab?.key === fileKey;
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "var(--color-bg-base)" }}>
@@ -199,11 +216,11 @@ export default function ConfigView() {
       <div className="flex flex-col flex-1 overflow-hidden px-5 py-4 gap-3">
         <div className="flex items-center gap-2">
           <div className="flex-1 text-xs" style={{ color: "var(--color-text-dimmed)" }}>
-            브라우저에 저장됨 (localStorage)
+            {isLoading ? "불러오는 중..." : source === "server" ? "서버 저장 (영구)" : source === "local" ? "브라우저 저장 (로컬)" : ""}
           </div>
-          {savedKeys[fileKey] && (
+          {isSaved && (
             <span className="text-xs px-2 py-1 rounded" style={{ background: "#0f2f1a", color: "#4ade80" }}>
-              저장됨 ✓
+              {savedTab?.source === "server" ? "서버에 저장됨 ✓" : "브라우저에 저장됨 ✓"}
             </span>
           )}
           <button
@@ -222,13 +239,8 @@ export default function ConfigView() {
           </button>
           <button
             onClick={() => handleSave(fileKey)}
-            className="text-xs px-3 py-1.5 rounded font-semibold transition-all"
-            style={{
-              background: "var(--color-accent-blue)",
-              color: "#fff",
-              border: "1px solid transparent",
-              cursor: "pointer",
-            }}
+            className="text-xs px-3 py-1.5 rounded font-semibold"
+            style={{ background: "var(--color-accent-blue)", color: "#fff", border: "1px solid transparent", cursor: "pointer" }}
           >
             저장
           </button>
@@ -236,6 +248,7 @@ export default function ConfigView() {
         <textarea
           value={contents[fileKey]}
           onChange={(e) => setContents((prev) => ({ ...prev, [fileKey]: e.target.value }))}
+          disabled={isLoading}
           spellCheck={false}
           className="flex-1 w-full resize-none rounded p-4 outline-none"
           style={{
@@ -247,7 +260,7 @@ export default function ConfigView() {
             lineHeight: 1.6,
             caretColor: "var(--color-accent-blue)",
           }}
-          placeholder={fileTab.placeholder}
+          placeholder={isLoading ? "불러오는 중..." : fileTab.placeholder}
         />
       </div>
     </div>
