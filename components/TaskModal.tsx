@@ -9,11 +9,95 @@ interface TaskWithBody extends Task {
   body?: string;
 }
 
+function parseTableRow(line: string): string[] {
+  return line.split("|").filter((_, idx, arr) => idx > 0 && idx < arr.length - 1).map(c => c.trim());
+}
+
+function isSeparatorRow(line: string): boolean {
+  return parseTableRow(line).every(c => /^:?-+:?$/.test(c.trim()));
+}
+
+function isTableLine(line: string): boolean {
+  return line.trim().startsWith("|") && line.trim().endsWith("|");
+}
+
+function renderCellText(text: string): React.ReactNode {
+  // Render inline markdown link: [label](url)
+  const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let last = 0, m: RegExpExecArray | null;
+  while ((m = linkRe.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      <a key={m.index} href={m[2]} target="_blank" rel="noopener noreferrer"
+        style={{ color: "var(--color-accent-blue, #6366f1)", textDecoration: "underline", textDecorationColor: "rgba(99,102,241,0.4)" }}>
+        {m[1]}
+      </a>
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length > 0 ? <>{parts}</> : text;
+}
+
 function MarkdownBody({ content }: { content: string }) {
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
+  let i = 0;
 
-  lines.forEach((line, i) => {
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Table block: collect consecutive table lines
+    if (isTableLine(line)) {
+      const tableLines: string[] = [];
+      while (i < lines.length && isTableLine(lines[i])) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      // First non-separator row = header, rest = body rows
+      const headerLine = tableLines[0];
+      const dataLines = tableLines.slice(1).filter(l => !isSeparatorRow(l));
+      const headers = parseTableRow(headerLine);
+      const rows = dataLines.map(parseTableRow);
+      elements.push(
+        <div key={`table-${i}`} style={{ overflowX: "auto", marginBottom: 10 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr>
+                {headers.map((h, ci) => (
+                  <th key={ci} style={{
+                    padding: "5px 10px", textAlign: "left", fontWeight: 600,
+                    color: "var(--color-text-dimmed)", fontSize: 10,
+                    textTransform: "uppercase", letterSpacing: "0.05em",
+                    borderBottom: "1px solid var(--color-bg-border)",
+                    background: "var(--color-bg-elevated)",
+                    whiteSpace: "nowrap",
+                  }}>{renderCellText(h)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri} style={{ borderBottom: "1px solid var(--color-bg-border)" }}>
+                  {row.map((cell, ci) => (
+                    <td key={ci} style={{
+                      padding: "5px 10px",
+                      color: "var(--color-text-secondary)",
+                      fontFamily: ci === 0 ? "var(--font-mono)" : undefined,
+                      fontSize: 12,
+                      verticalAlign: "top",
+                    }}>{renderCellText(cell)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+
     if (line.startsWith("## ")) {
       elements.push(
         <h3 key={i} style={{ color: "var(--color-text-secondary)", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 16, marginBottom: 6 }}>
@@ -43,7 +127,8 @@ function MarkdownBody({ content }: { content: string }) {
         </p>
       );
     }
-  });
+    i++;
+  }
 
   return <div>{elements}</div>;
 }
