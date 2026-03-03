@@ -165,6 +165,13 @@ echo ""
 echo "=== Setup complete! ==="
 echo "Your member ID is: $MDI_MEMBER_ID"
 echo "Please restart Claude Code for changes to take effect."
+echo ""
+echo "Opening dashboard..."
+if command -v open &>/dev/null; then
+  open "$MDI_SERVER"
+elif command -v xdg-open &>/dev/null; then
+  xdg-open "$MDI_SERVER"
+fi
 `;
 
   return new NextResponse(script, {
