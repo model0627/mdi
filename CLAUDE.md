@@ -7,7 +7,7 @@
 ### 1. 작업 시작
 ```bash
 # status: active 확인 (SessionStart hook이 자동 설정하지만 명시적으로 확인)
-curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
+curl -s -X PATCH $MDI_SERVER/api/team/shawn \
   -H 'Content-Type: application/json' \
   -d '{"currentActivity":"[작업 내용 요약]"}' > /dev/null 2>&1 &
 ```
@@ -18,13 +18,13 @@ curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
 - `status: "progress"` 로 생성하고 **작업이 완전히 끝날 때까지 유지** → 완료 후 `done`
 
 ```bash
-NEXT_ID=$(curl -s http://192.168.130.36:3001/api/tasks | python3 -c "
+NEXT_ID=$(curl -s $MDI_SERVER/api/tasks | python3 -c "
 import json,sys
 tasks=json.load(sys.stdin)
 nums=[int(t['id'].replace('T-','')) for t in tasks if t['id'].startswith('T-') and t['id'][2:].isdigit()]
 print('T-'+str((max(nums) if nums else 0)+1).zfill(3))
 ")
-curl -s -X POST http://192.168.130.36:3001/api/tasks \
+curl -s -X POST $MDI_SERVER/api/tasks \
   -H 'Content-Type: application/json' \
   -d "{\"id\":\"$NEXT_ID\",\"title\":\"[작업제목]\",\"description\":\"[작업 상세 설명]\",\"status\":\"progress\",\"priority\":\"medium\",\"assigneeId\":\"shawn\",\"due\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"startDate\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
 echo "태스크 생성: $NEXT_ID"
@@ -40,7 +40,7 @@ echo "태스크 생성: $NEXT_ID"
 
 ```bash
 # 1) MDI 태스크 → description 업데이트 + due 현재시간 + body 작성 + status: done (한 번에 처리)
-curl -s -X PATCH http://192.168.130.36:3001/api/tasks/$NEXT_ID \
+curl -s -X PATCH $MDI_SERVER/api/tasks/$NEXT_ID \
   -H 'Content-Type: application/json' \
   -d "{
     \"status\": \"done\",
@@ -50,7 +50,7 @@ curl -s -X PATCH http://192.168.130.36:3001/api/tasks/$NEXT_ID \
   }"
 
 # 2) currentActivity 초기화
-curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
+curl -s -X PATCH $MDI_SERVER/api/team/shawn \
   -H 'Content-Type: application/json' \
   -d '{"currentActivity":""}' > /dev/null 2>&1 &
 # 참고: Stop hook은 currentActivity만 초기화 (status 유지)
@@ -67,7 +67,7 @@ curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
   ```
   | 커밋 | 내용 | 푸시 |
   |------|------|------|
-  | [`해시`](https://kp-gitlab.krpay.net/security/mdi/-/commit/전체해시) | 변경 내용 요약 | ✅ |
+  | [`해시`](https://github.com/model0627/mdi/commit/전체해시) | 변경 내용 요약 | ✅ |
   ```
 - `## 결과` — 기능 동작 확인 결과 (테스트 통과 여부 등)
 - 간단한 작업은 한 줄 요약도 무방
@@ -81,12 +81,12 @@ curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
 
 ```bash
 # currentActivity 설정
-curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
+curl -s -X PATCH $MDI_SERVER/api/team/shawn \
   -H 'Content-Type: application/json' \
   -d '{"currentActivity":"[내용]"}' > /dev/null 2>&1 &
 
 # currentActivity 초기화
-curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
+curl -s -X PATCH $MDI_SERVER/api/team/shawn \
   -H 'Content-Type: application/json' \
   -d '{"currentActivity":""}' > /dev/null 2>&1 &
 ```
@@ -111,12 +111,12 @@ curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
 ```
 | 커밋 | 내용 | 푸시 |
 |------|------|------|
-| [`해시`](https://kp-gitlab.krpay.net/security/mdi/-/commit/전체해시) | 변경 내용 요약 | ✅ |
+| [`해시`](https://github.com/model0627/mdi/commit/전체해시) | 변경 내용 요약 | ✅ |
 ```
 
 ### 규칙
-- 커밋 해시는 7자리로 표시하고, GitLab 커밋 URL로 링크 처리
-- GitLab 저장소 주소: `https://kp-gitlab.krpay.net/security/mdi`
+- 커밋 해시는 7자리로 표시하고, GitHub 커밋 URL로 링크 처리
+- GitHub 저장소 주소: `https://github.com/model0627/mdi`
 - 커밋 URL 형식: `.../commit/{전체 커밋 해시}`
 - 내용은 한국어로 간결하게 (20자 이내)
 - 푸시 성공: ✅ / 실패: ❌
@@ -125,5 +125,5 @@ curl -s -X PATCH http://192.168.130.36:3001/api/team/shawn \
 
 | 커밋 | 내용 | 푸시 |
 |------|------|------|
-| [`a58cdaa`](https://kp-gitlab.krpay.net/security/mdi/-/commit/a58cdaa) | writeTaskBodyContent 빌드 수정 | ✅ |
-| [`f66f457`](https://kp-gitlab.krpay.net/security/mdi/-/commit/f66f457) | 프로젝트 생성 UI | ✅ |
+| [`a58cdaa`](https://github.com/model0627/mdi/commit/a58cdaa) | writeTaskBodyContent 빌드 수정 | ✅ |
+| [`f66f457`](https://github.com/model0627/mdi/commit/f66f457) | 프로젝트 생성 UI | ✅ |
