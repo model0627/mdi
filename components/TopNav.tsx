@@ -15,6 +15,7 @@ const views = [
   { id: "tasks",     label: "작업 목록" },
   { id: "kanban",    label: "칸반 보드" },
   { id: "gantt",     label: "간트 차트" },
+  { id: "config",    label: "설정 파일" },
 ];
 
 export default function TopNav({ activeView, onViewChange }: TopNavProps) {

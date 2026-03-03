@@ -6,9 +6,10 @@ import DashboardView from "@/components/DashboardView";
 import TaskListView from "@/components/TaskListView";
 import GanttView from "@/components/GanttView";
 import KanbanView from "@/components/KanbanView";
+import ConfigView from "@/components/ConfigView";
 import { useSSE } from "@/hooks/useSSE";
 
-type View = "office" | "dashboard" | "tasks" | "kanban" | "gantt";
+type View = "office" | "dashboard" | "tasks" | "kanban" | "gantt" | "config";
 
 export default function Page() {
   const [view, setView] = useState<View>(() => {
@@ -33,6 +34,7 @@ export default function Page() {
         {view === "tasks"     && <TaskListView />}
         {view === "kanban"    && <KanbanView />}
         {view === "gantt"     && <GanttView />}
+        {view === "config"    && <ConfigView />}
       </main>
     </div>
   );
