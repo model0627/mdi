@@ -108,10 +108,23 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const token = crypto.randomBytes(16).toString('hex');
   const now = new Date();
   const expiresInDays = body.expiresInDays ?? 7;
   const expiresAt = new Date(now.getTime() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
+
+  // Self-contained token: embed invite data in base64url so Vercel serverless
+  // instances can decode without shared storage
+  const payload = {
+    v: 1,
+    memberId: body.memberId,
+    memberName: body.memberName,
+    initials: body.initials,
+    role: body.role,
+    avatarColor: body.avatarColor ?? 0,
+    createdAt: now.toISOString(),
+    expiresAt,
+  };
+  const token = Buffer.from(JSON.stringify(payload)).toString('base64url');
 
   const invite: Invite = {
     token,

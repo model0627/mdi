@@ -19,28 +19,51 @@ interface Invite {
   usedAt?: string;
 }
 
+function tryDecodeToken(token: string): Invite | null {
+  try {
+    const decoded = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));
+    if (decoded.v === 1 && decoded.memberId && decoded.expiresAt) {
+      return {
+        token,
+        memberId: decoded.memberId,
+        memberName: decoded.memberName,
+        initials: decoded.initials ?? '',
+        role: decoded.role,
+        avatarColor: decoded.avatarColor ?? 0,
+        status: 'pending',
+        createdAt: decoded.createdAt,
+        expiresAt: decoded.expiresAt,
+      };
+    }
+  } catch { /* not a base64url token */ }
+  return null;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const filePath = path.join(INVITES_DIR, `${token}.json`);
 
-  if (!fs.existsSync(filePath)) {
-    return new NextResponse('# Error: Invite not found\nexit 1\n', {
-      status: 404,
-      headers: { 'Content-Type': 'text/plain' },
-    });
-  }
+  // Try self-contained base64url token first (Vercel-compatible, no storage needed)
+  let invite: Invite | null = tryDecodeToken(token);
 
-  let invite: Invite;
-  try {
-    invite = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Invite;
-  } catch {
-    return new NextResponse('# Error: Failed to read invite\nexit 1\n', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' },
-    });
+  if (!invite) {
+    const filePath = path.join(INVITES_DIR, `${token}.json`);
+    if (!fs.existsSync(filePath)) {
+      return new NextResponse('# Error: Invite not found\nexit 1\n', {
+        status: 404,
+        headers: { 'Content-Type': 'text/plain' },
+      });
+    }
+    try {
+      invite = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Invite;
+    } catch {
+      return new NextResponse('# Error: Failed to read invite\nexit 1\n', {
+        status: 500,
+        headers: { 'Content-Type': 'text/plain' },
+      });
+    }
   }
 
   if (invite.status !== 'pending') {

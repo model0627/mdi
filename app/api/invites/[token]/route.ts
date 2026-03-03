@@ -22,6 +22,26 @@ interface Invite {
   usedAt?: string;
 }
 
+function tryDecodeToken(token: string): Invite | null {
+  try {
+    const decoded = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));
+    if (decoded.v === 1 && decoded.memberId && decoded.expiresAt) {
+      return {
+        token,
+        memberId: decoded.memberId,
+        memberName: decoded.memberName,
+        initials: decoded.initials ?? '',
+        role: decoded.role,
+        avatarColor: decoded.avatarColor ?? 0,
+        status: 'pending',
+        createdAt: decoded.createdAt,
+        expiresAt: decoded.expiresAt,
+      };
+    }
+  } catch { /* not a base64url token */ }
+  return null;
+}
+
 function readInvite(token: string): Invite | null {
   const filePath = path.join(INVITES_DIR, `${token}.json`);
   if (!fs.existsSync(filePath)) return null;
@@ -42,7 +62,8 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const invite = readInvite(token);
+  // Try self-contained base64url token first (works on Vercel without storage)
+  const invite = tryDecodeToken(token) ?? readInvite(token);
 
   if (!invite) {
     return NextResponse.json({ error: 'Invite not found' }, { status: 404 });
