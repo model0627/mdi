@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mdi-gamma.vercel.app"),
   title: "MDI Dashboard",
   description: "Markdown-based Team Dashboard",
   openGraph: {
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
     siteName: "MDI Dashboard",
     images: [
       {
-        url: "/opengraph-image",
+        url: "https://mdi-gamma.vercel.app/opengraph-image",
         width: 1200,
         height: 630,
         alt: "MDI Dashboard — Pixel Office",
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MDI Dashboard",
     description: "팀 작업과 현황을 한눈에 — Markdown-based Team Dashboard",
-    images: ["/opengraph-image"],
+    images: ["https://mdi-gamma.vercel.app/opengraph-image"],
   },
 };
 
