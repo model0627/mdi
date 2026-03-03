@@ -25,14 +25,23 @@ function formatDate(iso: string): string {
 export default function InvitePageClient({ invite }: { invite: InviteData }) {
   const [copied, setCopied] = useState(false);
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const command = `curl -fsSL ${baseUrl}/invite/${invite.token}/setup.sh | bash`;
+  const command = `curl -fsSL ${baseUrl}/api/invites/${invite.token}/setup.sh | bash`;
   const daysLeft = getDaysLeft(invite.expiresAt);
 
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(command).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+  const handleCopy = useCallback(async () => {
+    let success = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(command); success = true; } catch { /* fall through */ }
+    }
+    if (!success) {
+      const ta = document.createElement("textarea");
+      ta.value = command;
+      ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand("copy"); success = true; } catch { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+    if (success) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   }, [command]);
 
   return (
