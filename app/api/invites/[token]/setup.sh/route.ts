@@ -148,6 +148,64 @@ MDIBLOCKSEP
 
 echo "MDI block added to $CLAUDE_GLOBAL"
 
+# ── MEMORY.md 업데이트 (auto-memory: 현재 디렉토리 기준) ──────────────────────
+ESCAPED_CWD=$(echo "$PWD" | sed 's|/|-|g')
+MEMORY_DIR="$HOME/.claude/projects/\${ESCAPED_CWD}/memory"
+MEMORY_FILE="\${MEMORY_DIR}/MEMORY.md"
+mkdir -p "$MEMORY_DIR"
+
+if ! grep -q "MDI_SERVER" "$MEMORY_FILE" 2>/dev/null; then
+  cat >> "$MEMORY_FILE" << 'MEMSEP'
+
+# MDI 프로젝트 메모리
+
+## MDI 대시보드 구조
+
+- **서버**: \`$MDI_SERVER\` (전역 CLAUDE.md의 MDI_SERVER 참조)
+- **멤버 ID**: \`$MDI_MEMBER_ID\`
+- **상태 API**: \`PATCH /api/team/$MDI_MEMBER_ID\` (허용 필드: \`currentActivity\`, \`status\`)
+
+## 워크플로우 규칙
+
+모든 작업 세션에서 아래 순서를 따른다:
+
+1. **시작**: currentActivity 업데이트 (REST PATCH)
+2. **작업 생성**: 요청 받으면 태스크 먼저 생성 후 작업
+3. **진행**: 작업 수행 → 완료 후 태스크 done 처리
+4. **종료**: currentActivity 초기화 → 답변
+
+## MDI 태스크 연동 워크플로
+
+실질적 작업 시작 시 MDI API로 태스크 직접 생성 (도구 사용 시 반드시 먼저 생성):
+
+\`\`\`bash
+NEXT_ID=$(curl -s $MDI_SERVER/api/tasks | python3 -c "
+import json,sys
+tasks=json.load(sys.stdin)
+nums=[int(t['id'].replace('T-','')) for t in tasks if t['id'].startswith('T-') and t['id'][2:].isdigit()]
+print('T-'+str((max(nums) if nums else 0)+1).zfill(3))
+")
+curl -s -X POST $MDI_SERVER/api/tasks \
+  -H 'Content-Type: application/json' \
+  -d "{\"id\":\"$NEXT_ID\",\"title\":\"[제목]\",\"description\":\"[설명]\",\"status\":\"progress\",\"priority\":\"medium\",\"assigneeId\":\"$MDI_MEMBER_ID\",\"due\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"startDate\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+# 완료 시:
+curl -s -X PATCH $MDI_SERVER/api/tasks/$NEXT_ID \
+  -H 'Content-Type: application/json' \
+  -d "{\"status\":\"done\",\"due\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"description\":\"[요약]\",\"body\":\"## 완료 내용\n\n[요약]\n\n## 변경 파일\n\n- [파일]: [내용]\"}"
+\`\`\`
+
+## 파일 편집 금지
+
+\`data/team/$MDI_MEMBER_ID.md\` 직접 편집 금지 — mdi-sync.js 파일 감시 → 서버 push → status 덮어씌워짐
+MEMSEP
+  # $MDI_SERVER, $MDI_MEMBER_ID 실제 값으로 치환
+  sed -i '' "s|\\\$MDI_SERVER|${baseUrl}|g" "$MEMORY_FILE"
+  sed -i '' "s|\\\$MDI_MEMBER_ID|${memberId}|g" "$MEMORY_FILE"
+  echo "MEMORY.md 생성: $MEMORY_FILE"
+else
+  echo "MEMORY.md 이미 설정됨 (skip)"
+fi
+
 # Activate invite
 echo "Activating invite..."
 RESPONSE=$(curl -s -w "\\n%{http_code}" -X POST "$MDI_SERVER/api/invites/$TOKEN/activate" \\

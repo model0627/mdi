@@ -44,6 +44,7 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState("");
   const [result, setResult] = useState<InviteResponse | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedSetup, setCopiedSetup] = useState(false);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -87,37 +88,42 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
     }
   }, [name, memberId, role, avatarColorIdx, expireDays]);
 
-  const handleCopy = useCallback(() => {
-    if (!result?.inviteUrl) return;
-    const doCopy = () => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    };
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(result.inviteUrl).then(doCopy).catch(() => {
-        // fallback for HTTP (non-secure context)
-        const el = document.createElement("textarea");
-        el.value = result.inviteUrl;
-        el.style.position = "fixed";
-        el.style.opacity = "0";
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand("copy");
-        document.body.removeChild(el);
-        doCopy();
-      });
-    } else {
+  const copyText = useCallback((text: string, onDone: () => void) => {
+    const fallback = () => {
       const el = document.createElement("textarea");
-      el.value = result.inviteUrl;
+      el.value = text;
       el.style.position = "fixed";
       el.style.opacity = "0";
       document.body.appendChild(el);
       el.select();
       document.execCommand("copy");
       document.body.removeChild(el);
-      doCopy();
+      onDone();
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(onDone).catch(fallback);
+    } else {
+      fallback();
     }
-  }, [result]);
+  }, []);
+
+  const handleCopy = useCallback(() => {
+    if (!result?.inviteUrl) return;
+    copyText(result.inviteUrl, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [result, copyText]);
+
+  const handleCopySetup = useCallback(() => {
+    if (!result?.inviteUrl) return;
+    const setupUrl = result.inviteUrl.replace("/activate", "/setup.sh");
+    const cmd = `curl -fsSL ${setupUrl} | bash`;
+    copyText(cmd, () => {
+      setCopiedSetup(true);
+      setTimeout(() => setCopiedSetup(false), 2000);
+    });
+  }, [result, copyText]);
 
   const inputStyle = {
     width: "100%",
@@ -209,6 +215,52 @@ export default function InviteModal({ onClose }: { onClose: () => void }) {
               >
                 {copied ? "복사됨 ✓" : "복사"}
               </button>
+            </div>
+
+            {/* Setup curl command */}
+            <div className="flex flex-col gap-2">
+              <p style={{ fontSize: 11, color: "var(--color-text-dimmed)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                터미널에서 자동 설정 (권장)
+              </p>
+              <div
+                className="rounded-lg flex items-center gap-0"
+                style={{ background: "var(--color-bg-hover, rgba(255,255,255,0.04))", border: "1px solid var(--color-bg-border)", overflow: "hidden" }}
+              >
+                <code
+                  style={{
+                    flex: 1,
+                    padding: "10px 12px",
+                    fontSize: 11,
+                    color: "var(--color-text-secondary)",
+                    fontFamily: "monospace",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {`curl -fsSL ${result.inviteUrl.replace("/activate", "/setup.sh")} | bash`}
+                </code>
+                <button
+                  onClick={handleCopySetup}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: copiedSetup ? "#22c55e" : "#fff",
+                    background: copiedSetup ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    padding: "10px 14px",
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "background 0.2s, color 0.2s",
+                  }}
+                >
+                  {copiedSetup ? "복사됨 ✓" : "복사"}
+                </button>
+              </div>
+              <p style={{ fontSize: 11, color: "var(--color-text-dimmed)" }}>
+                CLAUDE.md 자동 업데이트 + 멤버 등록을 한 번에 처리합니다.
+              </p>
             </div>
 
             <div className="flex justify-end">
