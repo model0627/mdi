@@ -13,8 +13,12 @@ interface InviteData {
 }
 
 async function getInvite(token: string): Promise<InviteData | null> {
+  // On Vercel use self URL; locally use MDI server or NEXT_PUBLIC_API_BASE
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : (process.env.NEXT_PUBLIC_API_BASE ?? 'http://192.168.130.36:3001');
   try {
-    const res = await fetch(`http://192.168.130.36:3001/api/invites/${token}`, {
+    const res = await fetch(`${baseUrl}/api/invites/${token}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
