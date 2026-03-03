@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "팀 대시보드 — MDI",
+  title: "MDI Dashboard",
   description: "Markdown-based Team Dashboard",
 };
 
