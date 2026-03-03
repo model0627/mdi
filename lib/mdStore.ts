@@ -146,6 +146,7 @@ class MDStore {
     await _blobPut(pathname, content, {
       access: 'public',
       addRandomSuffix: false,
+      allowOverwrite: true,
       cacheControlMaxAge: 0,
     });
   }
