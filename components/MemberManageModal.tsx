@@ -39,7 +39,19 @@ export default function MemberManageModal({ onClose }: Props) {
       const res = await fetch(`/api/team/${id}/reinvite`, { method: "POST" });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json() as { inviteUrl: string };
-      await navigator.clipboard.writeText(data.inviteUrl);
+      // clipboard API requires HTTPS or localhost; fallback for HTTP
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(data.inviteUrl);
+      } else {
+        const el = document.createElement("textarea");
+        el.value = data.inviteUrl;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+      }
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (e) {
@@ -184,7 +196,7 @@ export default function MemberManageModal({ onClose }: Props) {
 
                 {confirmId === m.id ? (
                   <>
-                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>정말요?</span>
+                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>진짜에요?</span>
                     <button
                       onClick={() => handleDelete(m.id)}
                       disabled={deleting === m.id}
