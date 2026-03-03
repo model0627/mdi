@@ -96,26 +96,31 @@ export async function POST(
     writeInvite(invite);
   }
 
-  // If member doesn't exist in store (writeMemberFile may have failed earlier), create it now
-  if (!mdStore.members.has(invite.memberId)) {
-    const newMember = {
-      id: invite.memberId,
-      name: invite.memberName,
-      initials: invite.initials,
-      avatarColor: invite.avatarColor,
-      role: invite.role,
-      status: 'active' as const,
-      currentActivity: '',
-    };
-    await mdStore.writeMemberFile(newMember);
-    mdStore.members.set(newMember.id, newMember);
-    mdStore.broadcast('member:update', newMember);
-    return NextResponse.json({ success: true, member: newMember });
+  try {
+    // If member doesn't exist in store (writeMemberFile may have failed earlier), create it now
+    if (!mdStore.members.has(invite.memberId)) {
+      const newMember = {
+        id: invite.memberId,
+        name: invite.memberName,
+        initials: invite.initials,
+        avatarColor: invite.avatarColor,
+        role: invite.role,
+        status: 'active' as const,
+        currentActivity: '',
+      };
+      await mdStore.writeMemberFile(newMember);
+      mdStore.members.set(newMember.id, newMember);
+      mdStore.broadcast('member:update', newMember);
+      return NextResponse.json({ success: true, member: newMember });
+    }
+
+    // Update member status to active
+    await mdStore.updateMemberField(invite.memberId, 'status', 'active');
+
+    const updatedMember = mdStore.members.get(invite.memberId);
+    return NextResponse.json({ success: true, member: updatedMember });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: 'activate failed', detail: msg }, { status: 500 });
   }
-
-  // Update member status to active
-  await mdStore.updateMemberField(invite.memberId, 'status', 'active');
-
-  const updatedMember = mdStore.members.get(invite.memberId);
-  return NextResponse.json({ success: true, member: updatedMember });
 }
