@@ -176,6 +176,49 @@ const STATUS_FILTERS: { value: Status | "all"; label: string }[] = [
   { value: "cancelled", label: "취소" },
 ];
 
+function BackupButton() {
+  const [loading, setLoading] = useState(false);
+
+  const handleBackup = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/backup");
+      if (!res.ok) throw new Error("Backup failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cd = res.headers.get("Content-Disposition") ?? "";
+      const match = cd.match(/filename="([^"]+)"/);
+      a.download = match?.[1] ?? "mdi-backup.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleBackup}
+      disabled={loading}
+      title="작업 목록 ZIP 백업 다운로드"
+      style={{
+        fontSize: 11, fontFamily: "var(--font-display)",
+        color: "var(--color-text-muted)",
+        padding: "4px 10px", borderRadius: 6,
+        border: "1px solid var(--color-bg-border)",
+        background: "transparent",
+        cursor: loading ? "wait" : "pointer",
+        opacity: loading ? 0.6 : 1,
+        display: "flex", alignItems: "center", gap: 4,
+      }}
+    >
+      {loading ? "생성 중..." : "⬇ 백업"}
+    </button>
+  );
+}
+
 export default function TaskListView() {
   const [filter, setFilter] = useState<Status | "all">("all");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => {
@@ -209,6 +252,8 @@ export default function TaskListView() {
         >
           작업 목록
         </h2>
+        <div className="flex items-center gap-2">
+        <BackupButton />
         <div className="flex items-center gap-1.5">
           {STATUS_FILTERS.map(({ value, label }) => (
             <button
@@ -225,6 +270,7 @@ export default function TaskListView() {
               {label}
             </button>
           ))}
+        </div>
         </div>
       </div>
 
