@@ -55,6 +55,10 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     fetch(`/api/tasks/${taskId}`)
@@ -157,6 +161,52 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
     }
   }, [buildMarkdown]);
 
+  const handleCopyLink = useCallback(async () => {
+    if (!task) return;
+    const link = `${window.location.origin}/?task=${task.id}`;
+    let success = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(link); success = true; } catch { /* fall through */ }
+    }
+    if (!success) {
+      const ta = document.createElement("textarea");
+      ta.value = link;
+      ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { document.execCommand("copy"); success = true; } catch { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+    if (success) { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }
+  }, [task]);
+
+  const handleShare = useCallback(async () => {
+    if (!task) return;
+    setShareLoading(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/share`, { method: "POST" });
+      const { token } = await res.json();
+      const url = `${window.location.origin}/share/${token}`;
+      setShareUrl(url);
+      // Copy to clipboard
+      let success = false;
+      if (navigator.clipboard && window.isSecureContext) {
+        try { await navigator.clipboard.writeText(url); success = true; } catch { /* fall through */ }
+      }
+      if (!success) {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        try { document.execCommand("copy"); success = true; } catch { /* ignore */ }
+        document.body.removeChild(ta);
+      }
+      if (success) { setShareCopied(true); setTimeout(() => setShareCopied(false), 3000); }
+    } finally {
+      setShareLoading(false);
+    }
+  }, [task]);
+
   const handleDownloadMarkdown = useCallback(() => {
     const md = buildMarkdown();
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
@@ -246,6 +296,20 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
               )}
             </div>
 
+            {/* Share bar */}
+            {shareUrl && (
+              <div className="px-5 py-2 flex items-center gap-2" style={{ borderTop: "1px solid var(--color-bg-border)", background: "rgba(99,102,241,0.06)" }}>
+                <span style={{ fontSize: 11, color: "#6366f1", flexShrink: 0 }}>🔗</span>
+                <span style={{ fontSize: 11, fontFamily: "monospace", color: "var(--color-text-dimmed)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shareUrl}</span>
+                <button
+                  onClick={handleShare}
+                  style={{ fontSize: 11, color: shareCopied ? "#6366f1" : "var(--color-text-dimmed)", flexShrink: 0, padding: "3px 8px", borderRadius: 4, border: "1px solid var(--color-bg-border)", background: "transparent", cursor: "pointer" }}
+                >
+                  {shareCopied ? "✓ 복사됨" : "복사"}
+                </button>
+              </div>
+            )}
+
             {/* Footer actions */}
             <div
               className="px-5 py-3 flex items-center justify-between gap-2"
@@ -287,6 +351,21 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                   </button>
                   <div className="flex items-center gap-1.5 flex-1 justify-center">
                     <button
+                      onClick={handleCopyLink}
+                      title="태스크 링크 복사"
+                      style={{
+                        fontSize: 11,
+                        color: linkCopied ? "var(--color-accent-blue, #6366f1)" : "var(--color-text-secondary)",
+                        padding: "5px 10px", borderRadius: 6,
+                        border: linkCopied ? "1px solid var(--color-accent-blue, #6366f1)" : "1px solid var(--color-bg-border)",
+                        background: linkCopied ? "rgba(99,102,241,0.08)" : "var(--color-bg-elevated)",
+                        display: "flex", alignItems: "center", gap: 4,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {linkCopied ? "✓ 링크 복사됨" : "🔗 링크"}
+                    </button>
+                    <button
                       onClick={handleCopyMarkdown}
                       title="마크다운 복사"
                       style={{
@@ -317,6 +396,22 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                       ↓ 다운로드
                     </button>
                   </div>
+                  <button
+                    onClick={handleShare}
+                    disabled={shareLoading}
+                    title="공개 공유 링크 생성"
+                    style={{
+                      fontSize: 12, fontWeight: 600,
+                      color: shareCopied ? "#6366f1" : "var(--color-text-secondary)",
+                      padding: "5px 14px", borderRadius: 6,
+                      border: shareCopied ? "1px solid #6366f1" : "1px solid var(--color-bg-border)",
+                      background: shareCopied ? "rgba(99,102,241,0.08)" : "transparent",
+                      cursor: shareLoading ? "wait" : "pointer",
+                      opacity: shareLoading ? 0.6 : 1,
+                    }}
+                  >
+                    {shareLoading ? "생성 중..." : shareCopied ? "✓ 링크 복사됨" : "공유"}
+                  </button>
                   <button
                     onClick={handleComplete}
                     disabled={isDone || completing}
