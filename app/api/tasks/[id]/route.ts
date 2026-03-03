@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mdStore } from '@/lib/mdStore';
 import { wsManager } from '@/lib/wsManager';
 import type { Task } from '@/lib/data';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,13 +14,7 @@ export async function GET(
   const task = mdStore.tasks.get(id);
   if (!task) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Read body: prefer file content, fall back to in-memory body
-  const filePath = path.join(process.cwd(), 'data', 'tasks', `${id}.md`);
-  let body = (task as Task & { body?: string }).body ?? '';
-  if (fs.existsSync(filePath)) {
-    const fileBody = matter(fs.readFileSync(filePath, 'utf-8')).content.trim();
-    if (fileBody) body = fileBody;
-  }
+  const body = await mdStore.readTaskBody(id);
   return NextResponse.json({ ...task, body });
 }
 
@@ -54,9 +45,9 @@ export async function PATCH(
     : updated;
   mdStore.tasks.set(id, updatedWithBody as Task);
   if (bodyContent !== undefined) {
-    mdStore.writeTaskBodyContent(updated, bodyContent);
+    await mdStore.writeTaskBodyContent(updated, bodyContent);
   } else {
-    mdStore.writeTaskFile(updated);
+    await mdStore.writeTaskFile(updated);
   }
   mdStore.broadcast('task:update', updated);
 

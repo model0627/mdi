@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   };
 
   mdStore.tasks.set(task.id, task);
-  mdStore.writeTaskFile(task);
+  await mdStore.writeTaskFile(task);
   mdStore.broadcast('task:create', task);
 
   return NextResponse.json(task, { status: 201 });
