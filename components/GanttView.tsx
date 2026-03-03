@@ -152,7 +152,7 @@ function GanttRow({ task, members, range, rowIndex }: {
       style={{ animationDelay: `${rowIndex * 0.04}s`, height: 44, borderBottom: "1px solid var(--color-bg-divider)" }}
     >
       {/* Label */}
-      <div className="shrink-0 flex items-center gap-2 px-3" style={{ width: 260, borderRight: "1px solid var(--color-bg-border)", height: "100%" }}>
+      <div className="shrink-0 flex items-center gap-2 px-3" style={{ width: "min(260px, 40vw)", borderRight: "1px solid var(--color-bg-border)", height: "100%" }}>
         <div className="rounded-sm shrink-0" style={{ width: 8, height: 8, background: border }} />
         <span className="text-xs truncate flex-1" style={{ color: "var(--color-text-secondary)", fontFamily: "var(--font-sans)" }}>
           {task.title}
@@ -308,7 +308,7 @@ export default function GanttView() {
                 className="flex items-center sticky"
                 style={{ top: 40, zIndex: 10, background: "var(--color-bg-elevated)", borderBottom: "1px solid var(--color-bg-border)", borderLeft: `3px solid ${project.color}`, height: 32 }}
               >
-                <div className="shrink-0 flex items-center gap-2 px-3" style={{ width: 257, borderRight: "1px solid var(--color-bg-border)", height: "100%" }}>
+                <div className="shrink-0 flex items-center gap-2 px-3" style={{ width: "min(257px, 40vw)", borderRight: "1px solid var(--color-bg-border)", height: "100%" }}>
                   <span className="text-xs font-bold truncate" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}>
                     {project.name}
                   </span>
@@ -331,7 +331,7 @@ export default function GanttView() {
                 {/* Today vertical line */}
                 <div
                   className="absolute top-0 bottom-0 pointer-events-none z-10"
-                  style={{ left: `calc(260px + (100% - 260px) * ${todayPos})`, width: 1, background: "rgba(244,63,94,0.6)" }}
+                  style={{ left: `calc(min(260px, 40vw) + (100% - min(260px, 40vw)) * ${todayPos})`, width: 1, background: "rgba(244,63,94,0.6)" }}
                 />
                 {ptasks.map((t, i) => (
                   <GanttRow key={t.id} task={t} members={members} range={range} rowIndex={i} />

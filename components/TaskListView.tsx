@@ -39,7 +39,7 @@ function TaskRow({ task, members, index, onClick }: { task: Task; members: Membe
       </td>
       <td><StatusBadge status={task.status} /></td>
       <td><PriorityBadge priority={task.priority} /></td>
-      <td>
+      <td className="col-hide-mobile">
         {assignee ? (
           <div className="flex items-center gap-1.5">
             <Avatar initials={assignee.initials} colorIndex={assignee.avatarColor} size="sm" />
@@ -49,12 +49,12 @@ function TaskRow({ task, members, index, onClick }: { task: Task; members: Membe
           <span style={{ fontSize: 12, color: "var(--color-text-dimmed)" }}>—</span>
         )}
       </td>
-      <td>
+      <td className="col-hide-mobile">
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-text-secondary)" }}>
           {fmtDate(task.created)}
         </span>
       </td>
-      <td>
+      <td className="col-hide-mobile">
         <span
           style={{
             fontFamily: "var(--font-mono)", fontSize: 12,
@@ -151,21 +151,26 @@ function ProjectSection({
       )}
 
       {open && filtered.length > 0 && (
-        <table className="task-table w-full" style={{ tableLayout: "fixed" }}>
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <table className="task-table w-full" style={{ tableLayout: "fixed", minWidth: 640 }}>
           <colgroup>
             <col style={{ width: 72 }} />
             <col />
             <col style={{ width: 110 }} />
             <col style={{ width: 80 }} />
-            <col style={{ width: 140 }} />
-            <col style={{ width: 120 }} />
-            <col style={{ width: 120 }} />
+            <col className="col-hide-mobile" style={{ width: 140 }} />
+            <col className="col-hide-mobile" style={{ width: 120 }} />
+            <col className="col-hide-mobile" style={{ width: 120 }} />
           </colgroup>
           <thead>
             <tr>
-              {["ID", "제목", "상태", "우선순위", "담당자", "생성일", "마감일"].map((h) => (
-                <th key={h}>{h}</th>
-              ))}
+              <th>ID</th>
+              <th>제목</th>
+              <th>상태</th>
+              <th>우선순위</th>
+              <th className="col-hide-mobile">담당자</th>
+              <th className="col-hide-mobile">생성일</th>
+              <th className="col-hide-mobile">마감일</th>
             </tr>
           </thead>
           <tbody>
@@ -174,6 +179,7 @@ function ProjectSection({
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
@@ -258,27 +264,28 @@ export default function TaskListView({ projectFilter, onClearFilter }: { project
   };
 
   return (
-    <div className="flex-1 overflow-auto p-5" style={{ background: "var(--color-bg-base)" }}>
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex-1 overflow-auto p-3 sm:p-5" style={{ background: "var(--color-bg-base)" }}>
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2
           className="text-sm font-bold"
           style={{ fontFamily: "var(--font-display)", color: "var(--color-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", fontSize: 11 }}
         >
           작업 목록
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
         <BackupButton />
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
           {STATUS_FILTERS.map(({ value, label }) => (
             <button
               key={value}
               onClick={() => setFilter(value)}
-              className="px-2.5 py-1 rounded text-xs font-medium transition-all"
+              className="px-2 sm:px-2.5 py-1 rounded text-xs font-medium transition-all"
               style={{
                 fontFamily: "var(--font-display)",
                 background: filter === value ? "var(--color-bg-elevated)" : "transparent",
                 color: filter === value ? "var(--color-text-primary)" : "var(--color-text-muted)",
                 border: filter === value ? "1px solid var(--color-bg-border)" : "1px solid transparent",
+                minHeight: 32,
               }}
             >
               {label}

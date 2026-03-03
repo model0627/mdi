@@ -91,8 +91,8 @@ export default function MemberManageModal({ onClose }: Props) {
       <div
         className="rounded-xl flex flex-col"
         style={{
-          width: 480,
-          maxHeight: "70vh",
+          width: "min(480px, calc(100vw - 24px))",
+          maxHeight: "85vh",
           background: "var(--color-bg-surface)",
           border: "1px solid var(--color-bg-border)",
           boxShadow: "0 24px 80px rgba(0,0,0,0.5)",

@@ -591,18 +591,18 @@ export default function OfficeView() {
   return (
     <div className="flex-1 overflow-auto" style={{ background: "var(--color-bg-base)" }}>
       {/* Header */}
-      <div className="px-6 pt-6 pb-2 flex items-start justify-between" style={{ borderBottom: "1px solid var(--color-bg-divider)" }}>
+      <div className="px-3 sm:px-6 pt-4 sm:pt-6 pb-2 flex items-start justify-between flex-wrap gap-2" style={{ borderBottom: "1px solid var(--color-bg-divider)" }}>
         <div>
-          <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}>
+          <h2 className="text-base sm:text-lg font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}>
             픽셀 오피스
           </h2>
           <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-            {members.filter((m) => m.status === "active").length}명 활성 · {members.length}명 총원 · 최대 {GRID_SLOTS}석
+            {members.filter((m) => m.status === "active").length}명 활성 · {members.length}명 총원
           </p>
         </div>
         {/* Zoom controls */}
         <div className="flex items-center gap-1.5" style={{ marginTop: 4 }}>
-          <span style={{ fontSize: 11, color: "var(--color-text-dimmed)", fontFamily: "var(--font-mono)", marginRight: 4 }}>확대</span>
+          <span className="hidden sm:inline" style={{ fontSize: 11, color: "var(--color-text-dimmed)", fontFamily: "var(--font-mono)", marginRight: 4 }}>확대</span>
           {[50, 75, 100].map((z) => (
             <button
               key={z}
@@ -614,6 +614,7 @@ export default function OfficeView() {
                 color: zoom === z ? "var(--color-text-primary)" : "var(--color-text-dimmed)",
                 border: zoom === z ? "1px solid var(--color-bg-border)" : "1px solid transparent",
                 cursor: "pointer",
+                minHeight: 32,
               }}
             >
               {z}%
@@ -623,7 +624,7 @@ export default function OfficeView() {
       </div>
 
       {/* Room */}
-      <div className="p-5">
+      <div className="p-2 sm:p-5">
         <div style={{
           background: "#120a04",
           border: "3px solid #3a1e08",
@@ -642,15 +643,15 @@ export default function OfficeView() {
           {/* ── Floor row: left-wall | desks | right-wall ── */}
           <div style={{ display: "flex", alignItems: "stretch" }}>
 
-            {/* Left wall — torch + barrel + torch */}
-            <div style={{
+            {/* Left wall — hidden on mobile */}
+            <div className="hidden sm:flex" style={{
               width: 76, flexShrink: 0,
               background: "#1e0e06",
               backgroundImage: [
                 "repeating-linear-gradient(0deg, rgba(0,0,0,0.45) 0px, rgba(0,0,0,0.45) 1px, transparent 1px, transparent 8px)",
                 "repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 14px)",
               ].join(","),
-              display: "flex", flexDirection: "column",
+              flexDirection: "column",
               alignItems: "center", justifyContent: "space-evenly",
               padding: "24px 0",
               borderRight: "2px solid #3a1e08",
@@ -666,15 +667,15 @@ export default function OfficeView() {
               background: "#a07840",
               backgroundImage: "repeating-conic-gradient(#906830 0% 25%, #a07840 0% 50%)",
               backgroundSize: "16px 16px",
-              padding: "28px 24px 20px",
+              padding: "16px 8px 12px",
               overflow: "auto",
-              /* subtle CRT scanlines */
+              WebkitOverflowScrolling: "touch",
               boxShadow: "inset 0 0 0 9999px repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px)",
             }}>
               <div
-                className="grid gap-x-5 gap-y-8"
+                className="grid gap-x-3 sm:gap-x-5 gap-y-6 sm:gap-y-8"
                 style={{
-                  gridTemplateColumns: "repeat(10, 96px)",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
                   justifyContent: "center",
                   zoom: zoom / 100,
                 }}
@@ -685,15 +686,15 @@ export default function OfficeView() {
               </div>
             </div>
 
-            {/* Right wall — torch + bookshelf + bulletin */}
-            <div style={{
+            {/* Right wall — hidden on mobile */}
+            <div className="hidden sm:flex" style={{
               width: 76, flexShrink: 0,
               background: "#1e0e06",
               backgroundImage: [
                 "repeating-linear-gradient(0deg, rgba(0,0,0,0.45) 0px, rgba(0,0,0,0.45) 1px, transparent 1px, transparent 8px)",
                 "repeating-linear-gradient(90deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 14px)",
               ].join(","),
-              display: "flex", flexDirection: "column",
+              flexDirection: "column",
               alignItems: "center", justifyContent: "space-evenly",
               padding: "24px 0",
               borderLeft: "2px solid #3a1e08",
@@ -707,7 +708,7 @@ export default function OfficeView() {
       </div>
 
       {/* Legend */}
-      <div className="px-6 pb-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div className="px-3 sm:px-6 pb-4 sm:pb-6 flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-2">
         <span className="text-xs" style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}>범례:</span>
         {[
           { badge: "!", label: "리뷰 대기", color: "#f43f5e" },
@@ -728,7 +729,7 @@ export default function OfficeView() {
             </span>
           ))}
         </span>
-        <span className="text-xs ml-auto" style={{ color: "var(--color-text-dimmed)", fontFamily: "var(--font-mono)" }}>
+        <span className="hidden sm:inline text-xs ml-auto" style={{ color: "var(--color-text-dimmed)", fontFamily: "var(--font-mono)" }}>
           마우스 올리면 작업 확인
         </span>
       </div>

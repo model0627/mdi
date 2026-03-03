@@ -93,7 +93,7 @@ export default function CreateProjectModal({ onClose, onCreated }: {
     >
       <div
         className="rounded-xl flex flex-col"
-        style={{ width: 480, background: "var(--color-bg-card)", border: "1px solid var(--color-bg-border)", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}
+        style={{ width: "min(480px, calc(100vw - 24px))", maxHeight: "90vh", overflow: "auto", background: "var(--color-bg-card)", border: "1px solid var(--color-bg-border)", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}
       >
         {/* Header */}
         <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--color-bg-border)" }}>

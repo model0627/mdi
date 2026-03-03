@@ -144,7 +144,7 @@ export default function KanbanView() {
 
   return (
     <div
-      className="flex-1 flex flex-col p-5"
+      className="flex-1 flex flex-col p-3 sm:p-5"
       style={{ background: "var(--color-bg-base)", overflow: "hidden" }}
     >
       {/* Header */}
@@ -168,6 +168,7 @@ export default function KanbanView() {
               borderRadius: 6, padding: "4px 8px",
               fontSize: 12, color: "var(--color-text-secondary)",
               outline: "none", cursor: "pointer",
+              minHeight: 32,
             }}
           >
             <option value="all">전체</option>
@@ -178,15 +179,17 @@ export default function KanbanView() {
         </div>
       </div>
 
-      {/* Board */}
+      {/* Board — horizontal scroll on mobile */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
+          gridTemplateColumns: "repeat(5, minmax(200px, 1fr))",
           gap: 12,
           flex: 1,
-          overflow: "hidden",
+          overflowX: "auto",
+          overflowY: "hidden",
           minHeight: 0,
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {COLUMNS.map(({ status, label, color }) => {

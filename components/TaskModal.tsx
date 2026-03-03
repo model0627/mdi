@@ -313,7 +313,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
     >
       <div
         className="rounded-xl overflow-hidden flex flex-col"
-        style={{ width: 560, maxHeight: "80vh", background: "var(--color-bg-card)", border: "1px solid var(--color-bg-border)", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}
+        style={{ width: "min(560px, calc(100vw - 24px))", maxHeight: "85vh", background: "var(--color-bg-card)", border: "1px solid var(--color-bg-border)", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}
       >
         {!task ? (
           <div className="flex items-center justify-center" style={{ height: 200, color: "var(--color-text-dimmed)" }}>
@@ -337,7 +337,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
             </div>
 
             {/* Meta */}
-            <div className="px-5 py-3 grid gap-2" style={{ borderBottom: "1px solid var(--color-bg-border)", gridTemplateColumns: "1fr 1fr" }}>
+            <div className="px-4 sm:px-5 py-3 grid gap-2" style={{ borderBottom: "1px solid var(--color-bg-border)", gridTemplateColumns: "1fr 1fr" }}>
               {[
                 { label: "담당자", value: task.assigneeId },
                 { label: "프로젝트", value: task.projectId },
@@ -397,7 +397,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
 
             {/* Footer actions */}
             <div
-              className="px-5 py-3 flex items-center justify-between gap-2"
+              className="px-3 sm:px-5 py-3 flex items-center justify-between gap-2 flex-wrap"
               style={{ borderTop: "1px solid var(--color-bg-border)" }}
             >
               {editing ? (
@@ -434,7 +434,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                   >
                     내용 편집
                   </button>
-                  <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <div className="flex items-center gap-1.5 flex-1 justify-center flex-wrap">
                     <button
                       onClick={handleCopyLink}
                       title="태스크 링크 복사"

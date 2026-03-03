@@ -279,9 +279,9 @@ export default function DashboardView({ onGoToTasks }: { onGoToTasks?: (projectI
   const [showCreateProject, setShowCreateProject] = useState(false);
 
   return (
-    <div className="flex-1 overflow-auto p-5" style={{ background: "var(--color-bg-base)" }}>
+    <div className="flex-1 overflow-auto p-3 sm:p-5" style={{ background: "var(--color-bg-base)" }}>
       {/* Projects */}
-      <section className="mb-7">
+      <section className="mb-5 sm:mb-7">
         <div className="flex items-center justify-between mb-3">
           <h2
             className="text-sm font-bold"
@@ -290,19 +290,19 @@ export default function DashboardView({ onGoToTasks }: { onGoToTasks?: (projectI
             프로젝트
           </h2>
           <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: "var(--color-text-dimmed)" }}>
+            <span className="text-xs hidden sm:inline" style={{ color: "var(--color-text-dimmed)" }}>
               {projects.length}개 활성
             </span>
             <button
               onClick={() => setShowCreateProject(true)}
-              className="flex items-center gap-1 text-xs rounded px-2 py-0.5 transition-colors"
-              style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)", border: "1px solid var(--color-bg-border)" }}
+              className="flex items-center gap-1 text-xs rounded px-2 py-1 sm:py-0.5 transition-colors"
+              style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)", border: "1px solid var(--color-bg-border)", minHeight: 32 }}
             >
               <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> 새 프로젝트
             </button>
           </div>
         </div>
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))" }}>
           {projects.map((p, i) => (
             <ProjectCard key={p.id} project={p} tasks={tasks} members={members} index={i} onGoToTasks={onGoToTasks ?? (() => {})} />
           ))}
@@ -322,7 +322,7 @@ export default function DashboardView({ onGoToTasks }: { onGoToTasks?: (projectI
             {members.filter((m) => m.status === "active").length}명 온라인
           </span>
         </div>
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}>
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(200px, 100%), 1fr))" }}>
           {members.map((m, i) => (
             <MemberCard key={m.id} member={m} tasks={tasks} index={i} onTaskClick={setSelectedTaskId} />
           ))}
