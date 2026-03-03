@@ -13,11 +13,12 @@ import CreateProjectModal from "./CreateProjectModal";
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
-function ProjectCard({ project, tasks, members, index }: {
+function ProjectCard({ project, tasks, members, index, onGoToTasks }: {
   project: Project;
   tasks: Task[];
   members: Member[];
   index: number;
+  onGoToTasks: (id: string) => void;
 }) {
   const ptasks = tasks.filter((t) => t.projectId === project.id);
   const done = ptasks.filter((t) => t.status === "done" || t.status === "cancelled").length;
@@ -114,16 +115,30 @@ function ProjectCard({ project, tasks, members, index }: {
             );
           })}
         </div>
-        <span
-          className="rounded-full px-2 py-0.5 text-xs font-semibold"
-          style={{
-            background: "rgba(79,142,247,0.15)",
-            color: "var(--color-accent-blue)",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          {project.memberIds.length}명
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className="rounded-full px-2 py-0.5 text-xs font-semibold"
+            style={{
+              background: "rgba(79,142,247,0.15)",
+              color: "var(--color-accent-blue)",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            {(project.memberIds ?? []).length}명
+          </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onGoToTasks(project.id); }}
+            className="text-xs rounded px-2 py-0.5 transition-colors"
+            style={{
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-text-secondary)",
+              border: "1px solid var(--color-bg-border)",
+              cursor: "pointer",
+            }}
+          >
+            작업 →
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -258,7 +273,7 @@ function MemberCard({ member, tasks, index, onTaskClick }: {
 
 // ─── Dashboard View ───────────────────────────────────────────────────────────
 
-export default function DashboardView() {
+export default function DashboardView({ onGoToTasks }: { onGoToTasks?: (projectId: string) => void } = {}) {
   const { projects, members, tasks } = useDashboardStore();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
@@ -289,7 +304,7 @@ export default function DashboardView() {
         </div>
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
           {projects.map((p, i) => (
-            <ProjectCard key={p.id} project={p} tasks={tasks} members={members} index={i} />
+            <ProjectCard key={p.id} project={p} tasks={tasks} members={members} index={i} onGoToTasks={onGoToTasks ?? (() => {})} />
           ))}
         </div>
       </section>

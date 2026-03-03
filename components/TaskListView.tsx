@@ -90,7 +90,7 @@ function ProjectSection({
     .sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status));
 
   const filtered = filter === "all" ? ptasks : ptasks.filter((t) => t.status === filter);
-  if (filtered.length === 0) return null;
+  if (filtered.length === 0 && filter !== "all") return null;
 
   return (
     <div
@@ -136,7 +136,21 @@ function ProjectSection({
         </div>
       </button>
 
-      {open && (
+      {open && filtered.length === 0 && (
+        <div
+          className="flex flex-col items-center justify-center py-10 gap-2"
+          style={{ color: "var(--color-text-dimmed)" }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="9" y1="12" x2="15" y2="12" />
+            <line x1="12" y1="9" x2="12" y2="15" />
+          </svg>
+          <span style={{ fontSize: 12, fontFamily: "var(--font-display)" }}>태스크가 없습니다</span>
+        </div>
+      )}
+
+      {open && filtered.length > 0 && (
         <table className="task-table w-full" style={{ tableLayout: "fixed" }}>
           <colgroup>
             <col style={{ width: 72 }} />
@@ -219,7 +233,7 @@ function BackupButton() {
   );
 }
 
-export default function TaskListView() {
+export default function TaskListView({ projectFilter, onClearFilter }: { projectFilter?: string | null; onClearFilter?: () => void } = {}) {
   const [filter, setFilter] = useState<Status | "all">("all");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
@@ -274,12 +288,28 @@ export default function TaskListView() {
         </div>
       </div>
 
-      {projects.map((p) => (
+      {projectFilter && (
+        <div
+          className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg text-xs"
+          style={{ background: "rgba(79,142,247,0.08)", border: "1px solid rgba(79,142,247,0.2)", color: "var(--color-accent-blue)" }}
+        >
+          <span>프로젝트 필터:</span>
+          <span className="font-semibold">{projects.find((p) => p.id === projectFilter)?.name ?? projectFilter}</span>
+          <button
+            onClick={onClearFilter}
+            style={{ marginLeft: "auto", opacity: 0.7, cursor: "pointer" }}
+          >
+            ✕ 전체 보기
+          </button>
+        </div>
+      )}
+
+      {(projectFilter ? projects.filter((p) => p.id === projectFilter) : projects).map((p) => (
         <ProjectSection key={p.id} project={p} tasks={tasks} members={members} filter={filter} onTaskClick={handleTaskClick} />
       ))}
 
       {/* 미분류 섹션 */}
-      {(() => {
+      {!projectFilter && (() => {
         const projectIds = new Set(projects.map((p) => p.id));
         const unassigned = tasks.filter((t) => !t.projectId || !projectIds.has(t.projectId));
         const filtered = filter === "all" ? unassigned : unassigned.filter((t) => t.status === filter);
