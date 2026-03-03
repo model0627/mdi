@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import InvitePageClient from "./InvitePageClient";
 import fs from "fs";
 import path from "path";
@@ -84,7 +83,34 @@ export default async function InvitePage({
   const invite = getInvite(token);
 
   if (!invite) {
-    notFound();
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6"
+        style={{ background: "var(--color-bg-base)" }}
+      >
+        <div
+          className="rounded-2xl flex flex-col items-center gap-4 text-center"
+          style={{
+            maxWidth: 400,
+            width: "100%",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-bg-border)",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+            padding: "48px 40px",
+          }}
+        >
+          <span style={{ fontSize: 40 }}>🔗</span>
+          <p style={{ fontSize: 18, fontWeight: 700, color: "var(--color-text-primary)" }}>
+            초대 링크를 찾을 수 없습니다
+          </p>
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+            링크가 만료되었거나 유효하지 않은 형식입니다.
+            <br />
+            팀 관리자에게 새 초대 링크를 요청하세요.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (invite.expired || invite.used) {
