@@ -241,7 +241,7 @@ export default function GanttView() {
       <div className="sticky top-0 z-20" style={{ background: "var(--color-bg-surface)", borderBottom: "1px solid var(--color-bg-border)" }}>
         <div className="flex items-center" style={{ height: 40 }}>
           {/* Left column: title + zoom toggle */}
-          <div className="shrink-0 flex items-center gap-2 px-3" style={{ width: 260, height: "100%", borderRight: "1px solid var(--color-bg-border)" }}>
+          <div className="shrink-0 flex items-center gap-2 px-3" style={{ width: "min(260px, 40vw)", height: "100%", borderRight: "1px solid var(--color-bg-border)" }}>
             <span className="text-xs font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", fontSize: 10 }}>
               작업 / 담당자
             </span>

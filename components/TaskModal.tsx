@@ -397,11 +397,11 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
 
             {/* Footer actions */}
             <div
-              className="px-3 sm:px-5 py-3 flex items-center justify-between gap-2 flex-wrap"
+              className="px-3 sm:px-5 py-3"
               style={{ borderTop: "1px solid var(--color-bg-border)" }}
             >
               {editing ? (
-                <>
+                <div className="flex items-center justify-between gap-2">
                   <button
                     onClick={() => { setEditing(false); setBodyDraft(task.body ?? ""); }}
                     style={{ fontSize: 12, color: "var(--color-text-dimmed)", padding: "5px 12px", borderRadius: 6, border: "1px solid var(--color-bg-border)" }}
@@ -425,16 +425,16 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                   >
                     {saving ? "저장 중..." : "저장"}
                   </button>
-                </>
+                </div>
               ) : (
-                <>
-                  <button
-                    onClick={() => setEditing(true)}
-                    style={{ fontSize: 12, color: "var(--color-text-secondary)", padding: "5px 12px", borderRadius: 6, border: "1px solid var(--color-bg-border)" }}
-                  >
-                    내용 편집
-                  </button>
-                  <div className="flex items-center gap-1.5 flex-1 justify-center flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setEditing(true)}
+                      style={{ fontSize: 12, color: "var(--color-text-secondary)", padding: "5px 12px", borderRadius: 6, border: "1px solid var(--color-bg-border)", cursor: "pointer" }}
+                    >
+                      내용 편집
+                    </button>
                     <button
                       onClick={handleCopyLink}
                       title="태스크 링크 복사"
@@ -448,7 +448,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                         cursor: "pointer",
                       }}
                     >
-                      {linkCopied ? "✓ 링크 복사됨" : "🔗 링크"}
+                      {linkCopied ? "✓ 복사됨" : "링크"}
                     </button>
                     <button
                       onClick={handleCopyMarkdown}
@@ -463,7 +463,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                         cursor: "pointer",
                       }}
                     >
-                      {copied ? "✓ 복사됨" : "⎘ 복사"}
+                      {copied ? "✓ 복사됨" : "복사"}
                     </button>
                     <button
                       onClick={handleDownloadMarkdown}
@@ -478,28 +478,30 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                         cursor: "pointer",
                       }}
                     >
-                      ↓ 다운로드
+                      다운로드
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      disabled={shareLoading}
+                      title="공개 공유 링크 생성"
+                      style={{
+                        fontSize: 11,
+                        color: shareCopied ? "#6366f1" : "var(--color-text-secondary)",
+                        padding: "5px 10px", borderRadius: 6,
+                        border: shareCopied ? "1px solid #6366f1" : "1px solid var(--color-bg-border)",
+                        background: shareCopied ? "rgba(99,102,241,0.08)" : "var(--color-bg-elevated)",
+                        cursor: shareLoading ? "wait" : "pointer",
+                        opacity: shareLoading ? 0.6 : 1,
+                        display: "flex", alignItems: "center", gap: 4,
+                      }}
+                    >
+                      {shareLoading ? "생성 중..." : shareCopied ? "✓ 공유됨" : "공유"}
                     </button>
                   </div>
                   <button
-                    onClick={handleShare}
-                    disabled={shareLoading}
-                    title="공개 공유 링크 생성"
-                    style={{
-                      fontSize: 12, fontWeight: 600,
-                      color: shareCopied ? "#6366f1" : "var(--color-text-secondary)",
-                      padding: "5px 14px", borderRadius: 6,
-                      border: shareCopied ? "1px solid #6366f1" : "1px solid var(--color-bg-border)",
-                      background: shareCopied ? "rgba(99,102,241,0.08)" : "transparent",
-                      cursor: shareLoading ? "wait" : "pointer",
-                      opacity: shareLoading ? 0.6 : 1,
-                    }}
-                  >
-                    {shareLoading ? "생성 중..." : shareCopied ? "✓ 링크 복사됨" : "공유"}
-                  </button>
-                  <button
                     onClick={handleComplete}
                     disabled={isDone || completing}
+                    className="sm:ml-auto shrink-0"
                     style={{
                       fontSize: 12,
                       fontWeight: 600,
@@ -514,7 +516,7 @@ export default function TaskModal({ taskId, onClose }: { taskId: string; onClose
                   >
                     {isDone ? "완료됨" : completing ? "처리 중..." : "태스크 완료"}
                   </button>
-                </>
+                </div>
               )}
             </div>
           </>

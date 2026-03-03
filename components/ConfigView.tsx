@@ -123,14 +123,14 @@ export default function ConfigView() {
     <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "var(--color-bg-base)" }}>
       {/* File Tabs */}
       <div
-        className="flex items-center gap-1 px-5 py-2 border-b"
+        className="flex items-center gap-1 px-3 sm:px-5 py-2 border-b overflow-x-auto scrollbar-hide"
         style={{ borderColor: "var(--color-bg-border)", background: "var(--color-bg-surface)" }}
       >
         {FILES.map((f) => (
           <button
             key={f.key}
             onClick={() => { setActiveKey(f.key); setError(null); setSaved(false); }}
-            className="px-3 py-1.5 rounded text-xs font-medium transition-all"
+            className="px-3 py-1.5 rounded text-xs font-medium transition-all whitespace-nowrap shrink-0"
             style={{
               background: activeKey === f.key ? "var(--color-bg-elevated)" : "transparent",
               color: activeKey === f.key ? "var(--color-text-primary)" : "var(--color-text-muted)",
@@ -141,16 +141,16 @@ export default function ConfigView() {
           </button>
         ))}
         <div className="flex-1" />
-        {/* File path info */}
+        {/* File path info — hidden on mobile */}
         {fileInfo && (
-          <span className="text-xs" style={{ color: "var(--color-text-dimmed)", fontFamily: "var(--font-mono, monospace)" }}>
+          <span className="text-xs hidden sm:inline shrink-0" style={{ color: "var(--color-text-dimmed)", fontFamily: "var(--font-mono, monospace)" }}>
             {fileInfo.path}
           </span>
         )}
       </div>
 
       {/* Editor Area */}
-      <div className="flex flex-col flex-1 overflow-hidden px-5 py-4 gap-3">
+      <div className="flex flex-col flex-1 overflow-hidden px-3 sm:px-5 py-4 gap-3">
         {/* Toolbar */}
         <div className="flex items-center gap-2">
           <div className="flex-1 text-xs" style={{ color: "var(--color-text-dimmed)" }}>

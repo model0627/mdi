@@ -127,11 +127,11 @@ export default function MemberManageModal({ onClose }: Props) {
           {members.map((m) => (
             <div
               key={m.id}
-              className="flex items-center justify-between rounded-lg px-3 py-2.5"
+              className="flex items-start sm:items-center justify-between gap-2 flex-wrap rounded-lg px-3 py-2.5"
               style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-bg-border)" }}
             >
               {/* Avatar + Info */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div
                   className="flex items-center justify-center rounded-full text-white text-xs font-bold flex-shrink-0"
                   style={{
@@ -176,7 +176,7 @@ export default function MemberManageModal({ onClose }: Props) {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap shrink-0">
                 {/* Reinvite */}
                 <button
                   onClick={() => handleReinvite(m.id)}
