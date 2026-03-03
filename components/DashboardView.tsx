@@ -104,11 +104,11 @@ function ProjectCard({ project, tasks, members, index }: {
         style={{ borderTop: "1px solid var(--color-bg-divider)" }}
       >
         <div className="flex items-center" style={{ gap: -4 }}>
-          {project.memberIds.map((mid, i) => {
+          {(project.memberIds ?? []).map((mid, i) => {
             const m = getMember(mid);
             if (!m) return null;
             return (
-              <div key={mid} style={{ marginLeft: i > 0 ? -8 : 0, zIndex: project.memberIds.length - i }}>
+              <div key={mid} style={{ marginLeft: i > 0 ? -8 : 0, zIndex: (project.memberIds ?? []).length - i }}>
                 <Avatar initials={m.initials} colorIndex={m.avatarColor} size="sm" />
               </div>
             );

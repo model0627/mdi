@@ -131,6 +131,8 @@ class MDStore {
       } else if (segment === 'projects') {
         const project = data as Project;
         if (!project.id) return;
+        project.memberIds = project.memberIds ?? [];
+        project.taskIds = project.taskIds ?? [];
         this.projects.set(project.id, project);
       } else if (segment === 'team') {
         const member = data as Member;
