@@ -8,7 +8,11 @@ let chokidar: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let matter: any;
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const IS_VERCEL = process.env.VERCEL === '1';
+// Vercel serverless: process.cwd() is read-only, use /tmp for writes
+const DATA_DIR = IS_VERCEL
+  ? '/tmp/mdi/data'
+  : path.join(process.cwd(), 'data');
 
 export interface SSEClient {
   id: string;
@@ -30,12 +34,20 @@ class MDStore {
     if (this.initialized) return;
     this.initialized = true;
 
-    // Lazy-load Node.js-only modules
-    if (!chokidar) {
-      chokidar = (await import('chokidar')).default;
-    }
     if (!matter) {
       matter = (await import('gray-matter')).default;
+    }
+
+    // On Vercel: copy bundled data to /tmp on cold start, skip chokidar
+    if (IS_VERCEL) {
+      const bundled = path.join(process.cwd(), 'data');
+      if (fs.existsSync(bundled) && !fs.existsSync(DATA_DIR)) {
+        this.copyDirSync(bundled, DATA_DIR);
+      }
+    } else {
+      if (!chokidar) {
+        chokidar = (await import('chokidar')).default;
+      }
     }
 
     // Initial scan
@@ -43,17 +55,32 @@ class MDStore {
     this.scanDir(path.join(DATA_DIR, 'projects'));
     this.scanDir(path.join(DATA_DIR, 'team'));
 
-    // Watch for changes
-    this.watcher = chokidar.watch(DATA_DIR, {
-      ignored: [/(^|[/\\])\../, /\.archive/],
-      persistent: true,
-      ignoreInitial: true,
-    });
+    // Watch for changes (local server only)
+    if (!IS_VERCEL && chokidar) {
+      this.watcher = chokidar.watch(DATA_DIR, {
+        ignored: [/(^|[/\\])\../, /\.archive/],
+        persistent: true,
+        ignoreInitial: true,
+      });
 
-    this.watcher
-      .on('add', (fp: string) => this.scheduleParseFile(fp))
-      .on('change', (fp: string) => this.scheduleParseFile(fp))
-      .on('unlink', (fp: string) => this.handleUnlink(fp));
+      this.watcher
+        .on('add', (fp: string) => this.scheduleParseFile(fp))
+        .on('change', (fp: string) => this.scheduleParseFile(fp))
+        .on('unlink', (fp: string) => this.handleUnlink(fp));
+    }
+  }
+
+  private copyDirSync(src: string, dst: string) {
+    fs.mkdirSync(dst, { recursive: true });
+    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+      const srcPath = path.join(src, entry.name);
+      const dstPath = path.join(dst, entry.name);
+      if (entry.isDirectory()) {
+        this.copyDirSync(srcPath, dstPath);
+      } else {
+        fs.copyFileSync(srcPath, dstPath);
+      }
+    }
   }
 
   private scanDir(dir: string) {

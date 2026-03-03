@@ -6,7 +6,10 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-const INVITES_DIR = path.join(process.cwd(), 'data', 'invites');
+const IS_VERCEL = process.env.VERCEL === '1';
+const INVITES_DIR = IS_VERCEL
+  ? '/tmp/mdi/invites'
+  : path.join(process.cwd(), 'data', 'invites');
 
 interface Invite {
   token: string;
