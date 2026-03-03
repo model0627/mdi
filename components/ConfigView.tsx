@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 type FileKey = "global-claude" | "project-claude" | "memory";
 type TabKey = "mdi-config" | FileKey;
@@ -19,6 +20,28 @@ const FILE_TABS: { key: FileKey; label: string; placeholder: string }[] = [
 ];
 
 const LS_KEY = (key: FileKey) => `mdi-config-editor:${key}`;
+
+function PreviewToggle({ preview, onChange }: { preview: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex rounded overflow-hidden" style={{ border: "1px solid var(--color-bg-border)" }}>
+      {(["preview", "raw"] as const).map((mode) => {
+        const active = mode === "preview" ? preview : !preview;
+        return (
+          <button key={mode} onClick={() => onChange(mode === "preview")}
+            className="text-xs px-2.5 py-1 transition-all"
+            style={{
+              background: active ? "var(--color-bg-elevated)" : "transparent",
+              color: active ? "var(--color-text-primary)" : "var(--color-text-muted)",
+              cursor: "pointer",
+            }}
+          >
+            {mode === "preview" ? "미리보기" : "원문"}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 // Try server first, fall back to localStorage
 async function loadContent(key: FileKey): Promise<{ content: string; source: "server" | "local" }> {
@@ -52,6 +75,7 @@ async function saveContent(key: FileKey, content: string): Promise<"server" | "l
 
 export default function ConfigView() {
   const [activeTab, setActiveTab] = useState<TabKey>("mdi-config");
+  const [previewMode, setPreviewMode] = useState(true); // default: preview
 
   // MDI Config
   const [mdiConfig, setMdiConfig] = useState<MdiConfigInfo | null>(null);
@@ -169,6 +193,7 @@ export default function ConfigView() {
             {mdiError && (
               <span className="text-xs px-2 py-1 rounded" style={{ background: "#3f1a1a", color: "#f87171" }}>{mdiError}</span>
             )}
+            <PreviewToggle preview={previewMode} onChange={setPreviewMode} />
             <button
               onClick={handleCopy}
               disabled={!mdiConfig?.claudeBlock}
@@ -183,21 +208,30 @@ export default function ConfigView() {
               {copied ? "복사됨 ✓" : "클립보드 복사"}
             </button>
           </div>
-          <textarea
-            value={mdiConfig?.claudeBlock ?? ""}
-            readOnly
-            spellCheck={false}
-            className="flex-1 w-full resize-none rounded p-4 outline-none"
-            style={{
-              background: "var(--color-bg-surface)",
-              color: "var(--color-text-primary)",
-              border: "1px solid var(--color-bg-border)",
-              fontFamily: "var(--font-mono, 'Fira Code', 'Cascadia Code', monospace)",
-              fontSize: 13,
-              lineHeight: 1.6,
-            }}
-            placeholder={mdiLoading ? "불러오는 중..." : "설정 파일을 불러올 수 없습니다."}
-          />
+          {previewMode ? (
+            <div className="flex-1 overflow-y-auto rounded p-4" style={{ background: "var(--color-bg-surface)", border: "1px solid var(--color-bg-border)" }}>
+              {mdiConfig?.claudeBlock
+                ? <MarkdownRenderer content={mdiConfig.claudeBlock} />
+                : <span style={{ fontSize: 13, color: "var(--color-text-dimmed)" }}>{mdiLoading ? "불러오는 중..." : "내용이 없습니다."}</span>
+              }
+            </div>
+          ) : (
+            <textarea
+              value={mdiConfig?.claudeBlock ?? ""}
+              readOnly
+              spellCheck={false}
+              className="flex-1 w-full resize-none rounded p-4 outline-none"
+              style={{
+                background: "var(--color-bg-surface)",
+                color: "var(--color-text-primary)",
+                border: "1px solid var(--color-bg-border)",
+                fontFamily: "var(--font-mono, 'Fira Code', 'Cascadia Code', monospace)",
+                fontSize: 13,
+                lineHeight: 1.6,
+              }}
+              placeholder={mdiLoading ? "불러오는 중..." : "설정 파일을 불러올 수 없습니다."}
+            />
+          )}
         </div>
       </div>
     );
@@ -223,6 +257,7 @@ export default function ConfigView() {
               {savedTab?.source === "server" ? "서버에 저장됨 ✓" : "브라우저에 저장됨 ✓"}
             </span>
           )}
+          <PreviewToggle preview={previewMode} onChange={setPreviewMode} />
           <button
             onClick={() => handleClear(fileKey)}
             disabled={!contents[fileKey]}
@@ -245,23 +280,29 @@ export default function ConfigView() {
             저장
           </button>
         </div>
-        <textarea
-          value={contents[fileKey]}
-          onChange={(e) => setContents((prev) => ({ ...prev, [fileKey]: e.target.value }))}
-          disabled={isLoading}
-          spellCheck={false}
-          className="flex-1 w-full resize-none rounded p-4 outline-none"
-          style={{
-            background: "var(--color-bg-surface)",
-            color: "var(--color-text-primary)",
-            border: "1px solid var(--color-bg-border)",
-            fontFamily: "var(--font-mono, 'Fira Code', 'Cascadia Code', monospace)",
-            fontSize: 13,
-            lineHeight: 1.6,
-            caretColor: "var(--color-accent-blue)",
-          }}
-          placeholder={isLoading ? "불러오는 중..." : fileTab.placeholder}
-        />
+        {previewMode && contents[fileKey] ? (
+          <div className="flex-1 overflow-y-auto rounded p-4" style={{ background: "var(--color-bg-surface)", border: "1px solid var(--color-bg-border)" }}>
+            <MarkdownRenderer content={contents[fileKey]} />
+          </div>
+        ) : (
+          <textarea
+            value={contents[fileKey]}
+            onChange={(e) => setContents((prev) => ({ ...prev, [fileKey]: e.target.value }))}
+            disabled={isLoading}
+            spellCheck={false}
+            className="flex-1 w-full resize-none rounded p-4 outline-none"
+            style={{
+              background: "var(--color-bg-surface)",
+              color: "var(--color-text-primary)",
+              border: "1px solid var(--color-bg-border)",
+              fontFamily: "var(--font-mono, 'Fira Code', 'Cascadia Code', monospace)",
+              fontSize: 13,
+              lineHeight: 1.6,
+              caretColor: "var(--color-accent-blue)",
+            }}
+            placeholder={isLoading ? "불러오는 중..." : fileTab.placeholder}
+          />
+        )}
       </div>
     </div>
   );
