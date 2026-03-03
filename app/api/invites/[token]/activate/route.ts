@@ -5,7 +5,10 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-const INVITES_DIR = path.join(process.cwd(), 'data', 'invites');
+const IS_VERCEL = process.env.VERCEL === '1';
+const INVITES_DIR = IS_VERCEL
+  ? '/tmp/mdi/invites'
+  : path.join(process.cwd(), 'data', 'invites');
 
 interface Invite {
   token: string;
@@ -18,6 +21,26 @@ interface Invite {
   createdAt: string;
   expiresAt: string;
   usedAt?: string;
+}
+
+function tryDecodeToken(token: string): Invite | null {
+  try {
+    const decoded = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));
+    if (decoded.v === 1 && decoded.memberId && decoded.expiresAt) {
+      return {
+        token,
+        memberId: decoded.memberId,
+        memberName: decoded.memberName,
+        initials: decoded.initials ?? '',
+        role: decoded.role,
+        avatarColor: decoded.avatarColor ?? 0,
+        status: 'pending',
+        createdAt: decoded.createdAt,
+        expiresAt: decoded.expiresAt,
+      };
+    }
+  } catch { /* not a base64url token */ }
+  return null;
 }
 
 function readInvite(token: string): Invite | null {
@@ -41,7 +64,10 @@ export async function POST(
 ) {
   await mdStore.init();
   const { token } = await params;
-  const invite = readInvite(token);
+
+  // Try self-contained base64url token first
+  const decoded = tryDecodeToken(token);
+  const invite = decoded ?? readInvite(token);
 
   if (!invite) {
     return NextResponse.json({ error: 'Invite not found' }, { status: 404 });
@@ -56,15 +82,19 @@ export async function POST(
   }
 
   if (new Date(invite.expiresAt) < new Date()) {
-    invite.status = 'expired';
-    writeInvite(invite);
+    if (!decoded) {
+      invite.status = 'expired';
+      writeInvite(invite);
+    }
     return NextResponse.json({ error: 'Invite has expired' }, { status: 410 });
   }
 
-  // Mark invite as used
-  invite.status = 'used';
-  invite.usedAt = new Date().toISOString();
-  writeInvite(invite);
+  // Mark file-based invite as used (base64url tokens are self-contained, skip)
+  if (!decoded) {
+    invite.status = 'used';
+    invite.usedAt = new Date().toISOString();
+    writeInvite(invite);
+  }
 
   // Update member status to active
   await mdStore.updateMemberField(invite.memberId, 'status', 'active');
