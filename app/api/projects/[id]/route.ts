@@ -25,7 +25,7 @@ export async function DELETE(
   }
 
   mdStore.projects.delete(id);
-  mdStore.deleteProjectFile(id);
+  await mdStore.deleteProjectFile(id);
   mdStore.broadcast('project:delete', { id });
 
   return NextResponse.json({ deleted: id });

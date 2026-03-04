@@ -396,14 +396,11 @@ class MDStore {
     }
   }
 
-  deleteProjectFile(id: string): void {
+  async deleteProjectFile(id: string): Promise<void> {
     if (IS_VERCEL) {
-      _blobList({ prefix: `projects/${id}.md` })
-        .then(({ blobs }: { blobs: { url: string }[] }) => {
-          const match = blobs.find((b) => b.url.includes(`projects/${id}.md`));
-          if (match) _blobDel(match.url);
-        })
-        .catch(console.error);
+      const { blobs } = await _blobList({ prefix: `projects/${id}.md` });
+      const match = blobs.find((b: { url: string }) => b.url.includes(`projects/${id}.md`));
+      if (match) await _blobDel(match.url);
     } else {
       const filePath = path.join(LOCAL_DATA_DIR, 'projects', `${id}.md`);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
