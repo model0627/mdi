@@ -13,10 +13,28 @@ interface MdiConfigInfo {
   lastModified: string;
 }
 
-const FILE_TABS: { key: FileKey; label: string; placeholder: string }[] = [
-  { key: "global-claude",  label: "전역 CLAUDE.md",     placeholder: "~/.claude/CLAUDE.md 내용을 붙여넣으세요" },
-  { key: "project-claude", label: "프로젝트 CLAUDE.md", placeholder: "mdi-dashboard/CLAUDE.md 내용을 붙여넣으세요" },
-  { key: "memory",         label: "MEMORY.md",           placeholder: "~/.claude/projects/.../memory/MEMORY.md 내용을 붙여넣으세요" },
+const FILE_TABS: { key: FileKey; label: string; placeholder: string; path: string; pathDesc: string }[] = [
+  {
+    key: "global-claude",
+    label: "전역 CLAUDE.md",
+    placeholder: "~/.claude/CLAUDE.md 내용을 붙여넣으세요",
+    path: "~/.claude/CLAUDE.md",
+    pathDesc: "모든 프로젝트에 공통 적용되는 전역 Claude 지시 파일",
+  },
+  {
+    key: "project-claude",
+    label: "프로젝트 CLAUDE.md",
+    placeholder: "mdi-dashboard/CLAUDE.md 내용을 붙여넣으세요",
+    path: "{project_root}/CLAUDE.md",
+    pathDesc: "현재 프로젝트 루트에 위치한 프로젝트별 지시 파일",
+  },
+  {
+    key: "memory",
+    label: "MEMORY.md",
+    placeholder: "~/.claude/projects/.../memory/MEMORY.md 내용을 붙여넣으세요",
+    path: "~/.claude/projects/{-Users-name-project}/memory/MEMORY.md",
+    pathDesc: "프로젝트별 자동 메모리 파일 (Claude가 세션 간 정보를 유지)",
+  },
 ];
 
 const LS_KEY = (key: FileKey) => `mdi-config-editor:${key}`;
@@ -279,6 +297,18 @@ export default function ConfigView() {
           >
             저장
           </button>
+        </div>
+        <div
+          className="flex items-start gap-2 px-3 py-2 rounded text-xs"
+          style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-bg-border)" }}
+        >
+          <span style={{ color: "var(--color-text-dimmed)", flexShrink: 0 }}>위치</span>
+          <div className="flex flex-col gap-0.5">
+            <code style={{ color: "var(--color-text-secondary)", fontFamily: "var(--font-mono, monospace)", letterSpacing: "0.01em" }}>
+              {fileTab.path}
+            </code>
+            <span style={{ color: "var(--color-text-dimmed)" }}>{fileTab.pathDesc}</span>
+          </div>
         </div>
         {previewMode && contents[fileKey] ? (
           <div className="flex-1 overflow-y-auto rounded p-4" style={{ background: "var(--color-bg-surface)", border: "1px solid var(--color-bg-border)" }}>
